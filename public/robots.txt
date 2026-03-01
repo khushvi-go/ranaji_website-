@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://ranaji.store/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 10
+
+# Disallow patterns (if any in future)
+# Disallow: /admin/
+# Disallow: /private/
