@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Raleway', sans-serif;
+  background-color: #1C1208;
+  color: #F5EFE0;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Noise Texture Overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1C1208;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #BF8250;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #DEA044;
+}
+
+/* Selection Color */
+::selection {
+  background: rgba(222, 160, 68, 0.3);
+  color: #F5EFE0;
+}
+
+/* Gold Shimmer Animation for Text */
+.gold-shimmer {
+  background: linear-gradient(90deg, #DEA044, #F5D08A, #BF8250, #DEA044);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: goldShimmer 3s linear infinite;
+}
+
+@keyframes goldShimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Utility Classes */
+.text-shadow-gold {
+  text-shadow: 0 2px 20px rgba(222, 160, 68, 0.3);
+}
+
+.bg-dark-gradient {
+  background: linear-gradient(180deg, #1C1208, #2C1A0A);
+}
+
+.border-gradient-gold {
+  border-image: linear-gradient(135deg, #DEA044, #BF8250) 1;
+}
+
+/* Swiper Customization */
+.swiper-pagination-bullet {
+  background: #BF8250 !important;
+  opacity: 0.5;
+}
+
+.swiper-pagination-bullet-active {
+  background: #DEA044 !important;
+  opacity: 1;
+}
+
+.swiper-button-prev,
+.swiper-button-next {
+  color: #DEA044 !important;
+}
+
+/* Form Input Styles */
+input,
+textarea,
+select {
+  background-color: rgba(245, 239, 224, 0.05);
+  border: 1px solid rgba(222, 160, 68, 0.3);
+  color: #F5EFE0;
+  transition: all 0.3s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #DEA044;
+  box-shadow: 0 0 0 2px rgba(222, 160, 68, 0.2);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(245, 239, 224, 0.4);
+}
