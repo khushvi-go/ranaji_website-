@@ -88,16 +88,7 @@ const CollectionCard = ({ item }) => {
             </div>
           </motion.div>
 
-          {/* Price Tag - Floating */}
-          <motion.div
-            className="absolute bottom-4 right-4 z-10"
-            animate={isHovered ? { y: -5 } : { y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="bg-night/90 backdrop-blur-sm px-4 py-2 border border-gold/40">
-              <span className="font-serif text-xl text-gold">{item.price}</span>
-            </div>
-          </motion.div>
+
         </div>
 
         {/* Content */}

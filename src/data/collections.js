@@ -37,7 +37,7 @@ export const collections = [
     price: "₹16,000",
     priceType: "Starting Price",
     description: "Long flowing Achkan with traditional Rajasthani motifs, perfect for royal wedding ceremonies",
-    image: "/images/cd385319fff9c7dfc371d2bf08a60c41.jpg",
+    image: "/images/image.png",
     available: ["rent", "purchase"]
   },
   {
@@ -47,7 +47,7 @@ export const collections = [
     price: "₹18,000",
     priceType: "Starting Price",
     description: "Royal cream sherwani with red dupatta and gold embroidery for the perfect Dulha look",
-    image: "/images/468620690_18338704426195142_1504528542693550564_n.jpg",
+    image: "/images/image10.png",
     available: ["rent", "purchase"]
   },
   // BRIDE COLLECTION
@@ -99,7 +99,7 @@ export const collections = [
     price: "₹2,500",
     priceType: "Starting Price",
     description: "Traditional Rajasthani safa/paagdi with pearl, gold embellishments and royal feathers",
-    image: "/images/587771552_18385644520195142_1280633816568335167_n.jpg",
+    image: "/images/image2.png",
     available: ["rent", "purchase"]
   },
   {
@@ -109,7 +109,7 @@ export const collections = [
     price: "₹3,500",
     priceType: "Starting Price",
     description: "Ornate ceremonial talwar (sword) with decorated scabbard, essential for Rajput wedding rituals",
-    image: "/images/587771552_18385644520195142_1280633816568335167_n.jpg",
+    image: "/images/image5.png",
     available: ["rent", "purchase"]
   },
   {
@@ -119,7 +119,7 @@ export const collections = [
     price: "₹1,500",
     priceType: "Starting Price",
     description: "Traditional Rajputi nishan (flag) with royal emblem for baraat and wedding ceremonies",
-    image: "/images/587771552_18385644520195142_1280633816568335167_n.jpg",
+    image: "/images/a4d95777f41ab35a82b3b5028c350519.webp",
     available: ["purchase"]
   },
   {
@@ -129,7 +129,7 @@ export const collections = [
     price: "₹800",
     priceType: "Starting Price",
     description: "Authentic Rajasthani handicrafts including jewelry boxes, decorative items, and traditional artifacts",
-    image: "/images/587771552_18385644520195142_1280633816568335167_n.jpg",
+    image: "/images/image11.png",
     available: ["purchase"]
   }
 ];

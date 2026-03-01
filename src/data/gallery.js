@@ -61,6 +61,90 @@ export const galleryImages = [
     category: "group",
     title: "Udaipur City Palace",
     aspectRatio: "landscape"
+  },
+  {
+    id: 10,
+    src: "/images/image8.png",
+    category: "groom",
+    title: "Royal Groom Collection",
+    aspectRatio: "portrait"
+  },
+  {
+    id: 11,
+    src: "/images/image9.png",
+    category: "bride",
+    title: "Bridal Collection",
+    aspectRatio: "portrait"
+  },
+  {
+    id: 12,
+    src: "/images/image10.png",
+    category: "accessories",
+    title: "Wedding Accessories",
+    aspectRatio: "landscape"
+  },
+  {
+    id: 13,
+    src: "/images/image11.png",
+    category: "group",
+    title: "Wedding Ensemble",
+    aspectRatio: "landscape"
+  },
+  {
+    id: 14,
+    src: "/images/image12.png",
+    category: "groom",
+    title: "Traditional Wedding Attire",
+    aspectRatio: "portrait"
+  },
+  {
+    id: 15,
+    src: "/images/image.png",
+    category: "groom",
+    title: "Royal Achkan Collection",
+    aspectRatio: "portrait"
+  },
+  {
+    id: 16,
+    src: "/images/image3.png",
+    category: "bride",
+    title: "Designer Bridal Wear",
+    aspectRatio: "portrait"
+  },
+  {
+    id: 17,
+    src: "/images/image4.png",
+    category: "accessories",
+    title: "Royal Wedding Accessories",
+    aspectRatio: "landscape"
+  },
+  {
+    id: 18,
+    src: "/images/image5.png",
+    category: "accessories",
+    title: "Ceremonial Items",
+    aspectRatio: "portrait"
+  },
+  {
+    id: 19,
+    src: "/images/image6.png",
+    category: "accessories",
+    title: "Traditional Decoratives",
+    aspectRatio: "portrait"
+  },
+  {
+    id: 20,
+    src: "/images/image7.png",
+    category: "accessories",
+    title: "Rajasthani Handicrafts",
+    aspectRatio: "landscape"
+  },
+  {
+    id: 21,
+    src: "/images/cd385319fff9c7dfc371d2bf08a60c41.jpg",
+    category: "groom",
+    title: "Classic Sherwani Design",
+    aspectRatio: "portrait"
   }
 ];
 
