@@ -1,0 +1,22 @@
+{
+  "collections": [
+    {
+      "_id": "1772535018395",
+      "name": "Royal Sherwani",
+      "category": "groom",
+      "price": "₹15,000",
+      "description": "Premium embroidered sherwani",
+      "available": [
+        "rent",
+        "purchase"
+      ],
+      "createdAt": "2026-03-03T10:50:18.395Z",
+      "updatedAt": "2026-03-03T10:50:18.395Z"
+    }
+  ],
+  "testimonials": [],
+  "gallery": [],
+  "services": [],
+  "bookings": [],
+  "contacts": []
+}

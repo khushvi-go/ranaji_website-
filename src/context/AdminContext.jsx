@@ -1,8 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { collections as initialCollections } from '../data/collections';
-import { testimonials as initialTestimonials } from '../data/testimonials';
-import { galleryImages as initialGallery } from '../data/gallery';
-import { services as initialServices } from '../data/services';
+import { authAPI, collectionsAPI, testimonialsAPI, galleryAPI, servicesAPI, bookingsAPI, contactsAPI } from '../services/api';
 
 const AdminContext = createContext();
 
@@ -17,6 +14,7 @@ export const useAdmin = () => {
 export const AdminProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminUser, setAdminUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   
   // Data states
   const [collections, setCollections] = useState([]);
@@ -28,170 +26,288 @@ export const AdminProvider = ({ children }) => {
 
   // Load data on mount
   useEffect(() => {
-    const savedAuth = localStorage.getItem('ranaji-admin-auth');
-    if (savedAuth) {
-      const authData = JSON.parse(savedAuth);
-      setIsAuthenticated(authData.isAuthenticated);
-      setAdminUser(authData.adminUser);
+    const token = localStorage.getItem('ranaji-admin-token');
+    if (token) {
+      // Verify token validity
+      authAPI.verifyToken()
+        .then(response => {
+          if (response.valid) {
+            setIsAuthenticated(true);
+            setAdminUser(response.user);
+          } else {
+            localStorage.removeItem('ranaji-admin-token');
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem('ranaji-admin-token');
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
 
-    // Initialize data from localStorage or use initial data
-    const storedCollections = localStorage.getItem('ranaji-collections');
-    const storedTestimonials = localStorage.getItem('ranaji-testimonials');
-    const storedGallery = localStorage.getItem('ranaji-gallery');
-    const storedServices = localStorage.getItem('ranaji-services');
-    const storedBookings = localStorage.getItem('ranaji-bookings');
-    const storedContacts = localStorage.getItem('ranaji-contacts');
-
-    setCollections(storedCollections ? JSON.parse(storedCollections) : initialCollections);
-    setTestimonials(storedTestimonials ? JSON.parse(storedTestimonials) : initialTestimonials);
-    setGallery(storedGallery ? JSON.parse(storedGallery) : initialGallery);
-    setServices(storedServices ? JSON.parse(storedServices) : initialServices);
-    if (storedBookings) setBookings(JSON.parse(storedBookings));
-    if (storedContacts) setContacts(JSON.parse(storedContacts));
+    // Fetch public data
+    fetchPublicData();
   }, []);
 
-  // Auth functions
-  const login = (username, password) => {
-    if (username === 'admin' && password === 'ranaji123') {
-      const user = { username, role: 'admin', loginTime: new Date().toISOString() };
-      setIsAuthenticated(true);
-      setAdminUser(user);
-      localStorage.setItem('ranaji-admin-auth', JSON.stringify({ isAuthenticated: true, adminUser: user }));
-      return { success: true };
+  // Fetch all public data
+  const fetchPublicData = async () => {
+    try {
+      const [collectionsRes, testimonialsRes, galleryRes, servicesRes] = await Promise.all([
+        collectionsAPI.getAll('?active=true'),
+        testimonialsAPI.getAll('?active=true'),
+        galleryAPI.getAll('?active=true'),
+        servicesAPI.getAll('?active=true'),
+      ]);
+      
+      setCollections(collectionsRes.data || []);
+      setTestimonials(testimonialsRes.data || []);
+      setGallery(galleryRes.data || []);
+      setServices(servicesRes.data || []);
+    } catch (error) {
+      console.error('Error fetching public data:', error);
     }
-    return { success: false, message: 'Invalid credentials' };
+  };
+
+  // Fetch admin data (bookings, contacts)
+  const fetchAdminData = async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const [bookingsRes, contactsRes] = await Promise.all([
+        bookingsAPI.getAll(),
+        contactsAPI.getAll(),
+      ]);
+      
+      setBookings(bookingsRes.data || []);
+      setContacts(contactsRes.data || []);
+    } catch (error) {
+      console.error('Error fetching admin data:', error);
+    }
+  };
+
+  // Load admin data when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchAdminData();
+    }
+  }, [isAuthenticated]);
+
+  // Auth functions
+  const login = async (username, password) => {
+    try {
+      const response = await authAPI.login({ username, password });
+      
+      if (response.success) {
+        setIsAuthenticated(true);
+        setAdminUser(response.user);
+        localStorage.setItem('ranaji-admin-token', response.token);
+        return { success: true };
+      }
+      return { success: false, message: response.message };
+    } catch (error) {
+      return { success: false, message: error.message || 'Login failed' };
+    }
   };
 
   const logout = () => {
     setIsAuthenticated(false);
     setAdminUser(null);
-    localStorage.removeItem('ranaji-admin-auth');
+    localStorage.removeItem('ranaji-admin-token');
+    setBookings([]);
+    setContacts([]);
   };
 
   // Collections
-  const addCollection = (collection) => {
-    const newCollection = { ...collection, id: Date.now() };
-    const updated = [...collections, newCollection];
-    setCollections(updated);
-    localStorage.setItem('ranaji-collections', JSON.stringify(updated));
+  const addCollection = async (collection) => {
+    try {
+      const response = await collectionsAPI.create(collection);
+      setCollections([...collections, response.data]);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
-  const updateCollection = (id, updatedData) => {
-    const updated = collections.map(c => c.id === id ? { ...c, ...updatedData } : c);
-    setCollections(updated);
-    localStorage.setItem('ranaji-collections', JSON.stringify(updated));
+  const updateCollection = async (id, updatedData) => {
+    try {
+      const response = await collectionsAPI.update(id, updatedData);
+      setCollections(collections.map(c => c._id === id ? response.data : c));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
-  const deleteCollection = (id) => {
-    const updated = collections.filter(c => c.id !== id);
-    setCollections(updated);
-    localStorage.setItem('ranaji-collections', JSON.stringify(updated));
+  const deleteCollection = async (id) => {
+    try {
+      await collectionsAPI.delete(id);
+      setCollections(collections.filter(c => c._id !== id));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
   // Testimonials
-  const addTestimonial = (testimonial) => {
-    const newTestimonial = { ...testimonial, id: Date.now() };
-    const updated = [...testimonials, newTestimonial];
-    setTestimonials(updated);
-    localStorage.setItem('ranaji-testimonials', JSON.stringify(updated));
+  const addTestimonial = async (testimonial) => {
+    try {
+      const response = await testimonialsAPI.create(testimonial);
+      setTestimonials([...testimonials, response.data]);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
-  const updateTestimonial = (id, updatedData) => {
-    const updated = testimonials.map(t => t.id === id ? { ...t, ...updatedData } : t);
-    setTestimonials(updated);
-    localStorage.setItem('ranaji-testimonials', JSON.stringify(updated));
+  const updateTestimonial = async (id, updatedData) => {
+    try {
+      const response = await testimonialsAPI.update(id, updatedData);
+      setTestimonials(testimonials.map(t => t._id === id ? response.data : t));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
-  const deleteTestimonial = (id) => {
-    const updated = testimonials.filter(t => t.id !== id);
-    setTestimonials(updated);
-    localStorage.setItem('ranaji-testimonials', JSON.stringify(updated));
+  const deleteTestimonial = async (id) => {
+    try {
+      await testimonialsAPI.delete(id);
+      setTestimonials(testimonials.filter(t => t._id !== id));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
   // Gallery
-  const addGalleryImage = (image) => {
-    const newImage = { ...image, id: Date.now() };
-    const updated = [...gallery, newImage];
-    setGallery(updated);
-    localStorage.setItem('ranaji-gallery', JSON.stringify(updated));
+  const addGalleryImage = async (image) => {
+    try {
+      const response = await galleryAPI.create(image);
+      setGallery([...gallery, response.data]);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
-  const updateGalleryImage = (id, updatedData) => {
-    const updated = gallery.map(g => g.id === id ? { ...g, ...updatedData } : g);
-    setGallery(updated);
-    localStorage.setItem('ranaji-gallery', JSON.stringify(updated));
+  const updateGalleryImage = async (id, updatedData) => {
+    try {
+      const response = await galleryAPI.update(id, updatedData);
+      setGallery(gallery.map(g => g._id === id ? response.data : g));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
-  const deleteGalleryImage = (id) => {
-    const updated = gallery.filter(g => g.id !== id);
-    setGallery(updated);
-    localStorage.setItem('ranaji-gallery', JSON.stringify(updated));
+  const deleteGalleryImage = async (id) => {
+    try {
+      await galleryAPI.delete(id);
+      setGallery(gallery.filter(g => g._id !== id));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
   // Services
-  const addService = (service) => {
-    const newService = { ...service, id: Date.now() };
-    const updated = [...services, newService];
-    setServices(updated);
-    localStorage.setItem('ranaji-services', JSON.stringify(updated));
+  const addService = async (service) => {
+    try {
+      const response = await servicesAPI.create(service);
+      setServices([...services, response.data]);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
-  const updateService = (id, updatedData) => {
-    const updated = services.map(s => s.id === id ? { ...s, ...updatedData } : s);
-    setServices(updated);
-    localStorage.setItem('ranaji-services', JSON.stringify(updated));
+  const updateService = async (id, updatedData) => {
+    try {
+      const response = await servicesAPI.update(id, updatedData);
+      setServices(services.map(s => s._id === id ? response.data : s));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
-  const deleteService = (id) => {
-    const updated = services.filter(s => s.id !== id);
-    setServices(updated);
-    localStorage.setItem('ranaji-services', JSON.stringify(updated));
+  const deleteService = async (id) => {
+    try {
+      await servicesAPI.delete(id);
+      setServices(services.filter(s => s._id !== id));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
   // Bookings
-  const addBooking = (booking) => {
-    const newBooking = { ...booking, id: Date.now(), status: 'pending', createdAt: new Date().toISOString() };
-    const updated = [...bookings, newBooking];
-    setBookings(updated);
-    localStorage.setItem('ranaji-bookings', JSON.stringify(updated));
+  const addBooking = async (booking) => {
+    try {
+      const response = await bookingsAPI.create(booking);
+      setBookings([...bookings, response.data]);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
-  const updateBookingStatus = (id, status) => {
-    const updated = bookings.map(b => b.id === id ? { ...b, status } : b);
-    setBookings(updated);
-    localStorage.setItem('ranaji-bookings', JSON.stringify(updated));
+  const updateBookingStatus = async (id, status) => {
+    try {
+      const response = await bookingsAPI.update(id, { status });
+      setBookings(bookings.map(b => b._id === id ? response.data : b));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
-  const deleteBooking = (id) => {
-    const updated = bookings.filter(b => b.id !== id);
-    setBookings(updated);
-    localStorage.setItem('ranaji-bookings', JSON.stringify(updated));
+  const deleteBooking = async (id) => {
+    try {
+      await bookingsAPI.delete(id);
+      setBookings(bookings.filter(b => b._id !== id));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
   // Contacts
-  const addContact = (contact) => {
-    const newContact = { ...contact, id: Date.now(), createdAt: new Date().toISOString(), read: false };
-    const updated = [...contacts, newContact];
-    setContacts(updated);
-    localStorage.setItem('ranaji-contacts', JSON.stringify(updated));
+  const addContact = async (contact) => {
+    try {
+      const response = await contactsAPI.create(contact);
+      setContacts([...contacts, response.data]);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
-  const markContactAsRead = (id) => {
-    const updated = contacts.map(c => c.id === id ? { ...c, read: true } : c);
-    setContacts(updated);
-    localStorage.setItem('ranaji-contacts', JSON.stringify(updated));
+  const markContactAsRead = async (id) => {
+    try {
+      const response = await contactsAPI.markAsRead(id);
+      setContacts(contacts.map(c => c._id === id ? response.data : c));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
-  const deleteContact = (id) => {
-    const updated = contacts.filter(c => c.id !== id);
-    setContacts(updated);
-    localStorage.setItem('ranaji-contacts', JSON.stringify(updated));
+  const deleteContact = async (id) => {
+    try {
+      await contactsAPI.delete(id);
+      setContacts(contacts.filter(c => c._id !== id));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
   const value = {
     isAuthenticated,
     adminUser,
+    loading,
     login,
     logout,
     collections,
@@ -218,6 +334,8 @@ export const AdminProvider = ({ children }) => {
     addContact,
     markContactAsRead,
     deleteContact,
+    refreshData: fetchPublicData,
+    refreshAdminData: fetchAdminData,
     stats: {
       totalCollections: collections.length,
       totalTestimonials: testimonials.length,

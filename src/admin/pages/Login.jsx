@@ -18,10 +18,7 @@ const Login = () => {
     setError('');
     setIsLoading(true);
 
-    // Simulate network delay for better UX
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    const result = login(username, password);
+    const result = await login(username, password);
     
     if (result.success) {
       navigate('/admin');

@@ -114,13 +114,13 @@ const ContactSection = () => {
                   </label>
                   <select
                     {...register('occasion', { required: 'Occasion is required' })}
-                    className="w-full px-4 py-3 bg-cream/5 border border-gold/20 focus:border-gold outline-none transition-colors"
+                    className="w-full px-4 py-3 bg-cream/5 border border-gold/20 focus:border-gold outline-none transition-colors text-cream [&>option]:bg-night [&>option]:text-cream"
                   >
-                    <option value="">Select occasion</option>
-                    <option value="wedding">Wedding</option>
-                    <option value="engagement">Engagement</option>
-                    <option value="baarat">Baarat</option>
-                    <option value="other">Other</option>
+                    <option value="" className="bg-night text-cream">Select occasion</option>
+                    <option value="wedding" className="bg-night text-cream">Wedding</option>
+                    <option value="engagement" className="bg-night text-cream">Engagement</option>
+                    <option value="baarat" className="bg-night text-cream">Baarat</option>
+                    <option value="other" className="bg-night text-cream">Other</option>
                   </select>
                   {errors.occasion && (
                     <p className="text-crimson text-sm mt-1">{errors.occasion.message}</p>
@@ -132,12 +132,12 @@ const ContactSection = () => {
                   </label>
                   <select
                     {...register('lookingFor', { required: 'This field is required' })}
-                    className="w-full px-4 py-3 bg-cream/5 border border-gold/20 focus:border-gold outline-none transition-colors"
+                    className="w-full px-4 py-3 bg-cream/5 border border-gold/20 focus:border-gold outline-none transition-colors text-cream [&>option]:bg-night [&>option]:text-cream"
                   >
-                    <option value="">Select option</option>
-                    <option value="purchase">Purchase</option>
-                    <option value="rental">Rental</option>
-                    <option value="both">Both</option>
+                    <option value="" className="bg-night text-cream">Select option</option>
+                    <option value="purchase" className="bg-night text-cream">Purchase</option>
+                    <option value="rental" className="bg-night text-cream">Rental</option>
+                    <option value="both" className="bg-night text-cream">Both</option>
                   </select>
                   {errors.lookingFor && (
                     <p className="text-crimson text-sm mt-1">{errors.lookingFor.message}</p>
