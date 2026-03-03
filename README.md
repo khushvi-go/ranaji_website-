@@ -11,8 +11,8 @@ An exclusive royal wedding showroom website for Ranaji, featuring premium sherwa
 **Client:** Ranaji - An Exclusive Royal Wedding Showroom  
 **Location:** Udaipur, Rajasthan, India  
 **Website Type:** Business / E-commerce Showcase  
-**Developed By:** [Your Name]  
-**Completion Date:** March 2025
+**Developed By:** Abhiraj Singh Bhati,Khushveer Singh Goud.  
+**Completion Date:** ~~On process~~
 
 ---
 
