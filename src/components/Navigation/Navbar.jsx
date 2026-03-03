@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Phone } from 'lucide-react';
+import { Menu, X, Phone, Crown } from 'lucide-react';
 import MobileMenu from './MobileMenu';
 import Logo from '../UI/Logo';
 
@@ -102,6 +102,16 @@ const Navbar = () => {
               >
                 Book Now
               </motion.button>
+              <motion.a
+                href="/admin"
+                className="flex items-center gap-2 px-4 py-2 bg-gold/10 border border-gold/30 text-gold rounded-lg hover:bg-gold/20 transition-colors"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                title="Admin Panel"
+              >
+                <Crown size={16} />
+                <span className="font-body text-sm">Admin</span>
+              </motion.a>
             </div>
 
             {/* Mobile Menu Button */}

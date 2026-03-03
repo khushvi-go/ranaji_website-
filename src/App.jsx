@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LogoPreloader from './components/Preloader/LogoPreloader';
 import Navbar from './components/Navigation/Navbar';
 import useLenis from './hooks/useLenis';
@@ -15,15 +16,32 @@ import ContactSection from './components/Contact/ContactSection';
 import Footer from './components/Footer/Footer';
 import ScrollProgress from './components/UI/ScrollProgress';
 
-function App() {
+// Admin imports
+import { AdminProvider, useAdmin } from './context/AdminContext';
+import AdminLayout from './admin/components/AdminLayout';
+import Login from './admin/pages/Login';
+import Dashboard from './admin/pages/Dashboard';
+import Collections from './admin/pages/Collections';
+import Testimonials from './admin/pages/Testimonials';
+import Gallery from './admin/pages/Gallery';
+import Services from './admin/pages/Services';
+import Bookings from './admin/pages/Bookings';
+import Contacts from './admin/pages/Contacts';
+
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated } = useAdmin();
+  return isAuthenticated ? children : <Navigate to="/admin/login" replace />;
+};
+
+// Main Website Component
+const MainWebsite = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
 
-  // Initialize Lenis smooth scrolling
   useLenis();
 
   useEffect(() => {
-    // Check if user has already visited
     const hasVisited = sessionStorage.getItem('ranaji-visited');
     if (hasVisited) {
       setIsLoading(false);
@@ -38,52 +56,23 @@ function App() {
 
   return (
     <div className="relative bg-night min-h-screen">
-      {/* Logo Preloader */}
       {isLoading && <LogoPreloader onLoadingComplete={handleLoadingComplete} />}
-
-      {/* Main Content */}
       {showContent && (
         <>
-          {/* Scroll Progress Bar */}
           <ScrollProgress />
-
-          {/* Navigation */}
           <Navbar />
-
-          {/* Main Content */}
           <main>
-            {/* Hero Section */}
             <HeroSection />
-
-            {/* Marquee Strip */}
             <MarqueeStrip />
-
-            {/* About / Legacy Section */}
             <LegacySection />
-
-            {/* Collections Section */}
             <CollectionsSection />
-
-            {/* Services / Experience Section */}
             <ExperienceSection />
-
-            {/* Cultural / Udaipur Section */}
             <UdaipurSection />
-
-            {/* Testimonials Section */}
             <TestimonialsSection />
-
-            {/* Gallery Section */}
             <GallerySection />
-
-            {/* Contact Section */}
             <ContactSection />
           </main>
-
-          {/* Footer */}
           <Footer />
-
-          {/* Toast Notifications */}
           <Toaster
             position="bottom-right"
             toastOptions={{
@@ -104,6 +93,35 @@ function App() {
         </>
       )}
     </div>
+  );
+};
+
+function App() {
+  return (
+    <AdminProvider>
+      <Router>
+        <Routes>
+          {/* Main Website */}
+          <Route path="/" element={<MainWebsite />} />
+          
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<Login />} />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Dashboard />} />
+            <Route path="collections" element={<Collections />} />
+            <Route path="testimonials" element={<Testimonials />} />
+            <Route path="gallery" element={<Gallery />} />
+            <Route path="services" element={<Services />} />
+            <Route path="bookings" element={<Bookings />} />
+            <Route path="contacts" element={<Contacts />} />
+          </Route>
+        </Routes>
+      </Router>
+    </AdminProvider>
   );
 }
 
