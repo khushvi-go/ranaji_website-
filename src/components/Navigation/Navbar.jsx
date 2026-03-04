@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Phone, Crown } from 'lucide-react';
+import { Menu, X, Phone, Crown, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import MobileMenu from './MobileMenu';
 import Logo from '../UI/Logo';
+import { useUser } from '../../context/UserContext';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isAuthenticated, user } = useUser();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -102,6 +105,34 @@ const Navbar = () => {
               >
                 Book Now
               </motion.button>
+              
+              {/* User Account */}
+              {isAuthenticated ? (
+                <Link to="/profile">
+                  <motion.div
+                    className="flex items-center gap-2 px-4 py-2 bg-gold/20 border border-gold/40 text-gold rounded-lg hover:bg-gold/30 transition-colors cursor-pointer"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    title="My Profile"
+                  >
+                    <User size={16} />
+                    <span className="font-body text-sm">{user?.name?.split(' ')[0] || 'Profile'}</span>
+                  </motion.div>
+                </Link>
+              ) : (
+                <Link to="/login">
+                  <motion.div
+                    className="flex items-center gap-2 px-4 py-2 bg-cream/10 border border-cream/30 text-cream rounded-lg hover:bg-cream/20 transition-colors cursor-pointer"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    title="Login"
+                  >
+                    <User size={16} />
+                    <span className="font-body text-sm">Login</span>
+                  </motion.div>
+                </Link>
+              )}
+              
               <motion.a
                 href="/admin"
                 className="flex items-center gap-2 px-4 py-2 bg-gold/10 border border-gold/30 text-gold rounded-lg hover:bg-gold/20 transition-colors"

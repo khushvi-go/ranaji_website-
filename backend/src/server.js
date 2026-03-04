@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { connectDB, Collection, Testimonial, Gallery, Service, Booking, Contact } = require('./config/db-json');
+const { connectDB, Collection, Testimonial, Gallery, Service, Booking, Contact, User } = require('./config/db-json');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
 // Import routes
@@ -12,6 +12,7 @@ const galleryRoutes = require('./routes/gallery');
 const serviceRoutes = require('./routes/services');
 const bookingRoutes = require('./routes/bookings');
 const contactRoutes = require('./routes/contacts');
+const userRoutes = require('./routes/users');
 
 // Initialize app
 const app = express();
@@ -37,6 +38,7 @@ if (process.env.NODE_ENV === 'development') {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/collections', collectionRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/gallery', galleryRoutes);
@@ -62,6 +64,7 @@ app.get('/', (req, res) => {
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',
+      users: '/api/users',
       collections: '/api/collections',
       testimonials: '/api/testimonials',
       gallery: '/api/gallery',

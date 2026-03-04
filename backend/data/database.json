@@ -12,11 +12,152 @@
       ],
       "createdAt": "2026-03-03T10:50:18.395Z",
       "updatedAt": "2026-03-03T10:50:18.395Z"
+    },
+    {
+      "_id": "1772542889644",
+      "name": "kurta",
+      "category": "groom",
+      "price": "10,000",
+      "priceType": "500",
+      "description": "wqfsdf",
+      "image": "C:\\Users\\Administrator\\OneDrive\\画像\\Screenshots",
+      "available": [
+        "purchase"
+      ],
+      "createdAt": "2026-03-03T13:01:29.644Z",
+      "updatedAt": "2026-03-03T13:01:29.644Z"
     }
   ],
   "testimonials": [],
   "gallery": [],
   "services": [],
   "bookings": [],
-  "contacts": []
+  "contacts": [],
+  "users": [
+    {
+      "_id": "user_1772595632473_aemue3lua",
+      "name": "Khushveer singh Goud",
+      "email": "aconomiharuno@gmail.com",
+      "phone": "6266346021",
+      "role": "user",
+      "isActive": true,
+      "profile": {
+        "avatar": "",
+        "dateOfBirth": "",
+        "gender": ""
+      },
+      "address": {
+        "street": "",
+        "city": "",
+        "state": "",
+        "pincode": "",
+        "country": "India",
+        "landmark": ""
+      },
+      "measurements": {
+        "chest": "51",
+        "shoulder": "5",
+        "sleeveLength": "5",
+        "armHole": "",
+        "frontNeck": "",
+        "backNeck": "",
+        "waist": "",
+        "hips": "",
+        "inseam": "",
+        "thigh": "",
+        "knee": "",
+        "ankle": "",
+        "outseam": "",
+        "height": "",
+        "weight": "",
+        "notes": "fvs"
+      },
+      "sizePreferences": {
+        "shirtSize": "",
+        "pantSize": "",
+        "kurtaSize": "",
+        "sherwaniSize": "",
+        "lehengaSize": ""
+      },
+      "orders": [
+        {
+          "orderId": "ORD_1772595807491",
+          "items": [
+            {
+              "type": "sherwani",
+              "fabric": "Linen",
+              "color": "Ivory/White",
+              "occasion": "Weading",
+              "specialInstructions": "me gym ja rha hu isliye thoda bada banana . kyuki me jaldhi grow karne wala hu"
+            }
+          ],
+          "total": 0,
+          "status": "pending",
+          "type": "custom",
+          "createdAt": "2026-03-04T03:43:27.491Z",
+          "deliveryAddress": {
+            "street": "",
+            "city": "",
+            "state": "",
+            "pincode": "",
+            "country": "India",
+            "landmark": ""
+          }
+        }
+      ],
+      "testimonials": [],
+      "createdAt": "2026-03-04T03:40:32.474Z",
+      "updatedAt": "2026-03-04T03:44:07.154Z"
+    },
+    {
+      "_id": "user_1772596214748_xy7amjtcp",
+      "name": "Test User",
+      "email": "test@example.com",
+      "phone": "9876543210",
+      "role": "user",
+      "isActive": true,
+      "profile": {
+        "avatar": "",
+        "dateOfBirth": "",
+        "gender": ""
+      },
+      "address": {
+        "street": "",
+        "city": "",
+        "state": "",
+        "pincode": "",
+        "country": "India",
+        "landmark": ""
+      },
+      "measurements": {
+        "chest": "",
+        "shoulder": "",
+        "sleeveLength": "",
+        "armHole": "",
+        "frontNeck": "",
+        "backNeck": "",
+        "waist": "",
+        "hips": "",
+        "inseam": "",
+        "thigh": "",
+        "knee": "",
+        "ankle": "",
+        "outseam": "",
+        "height": "",
+        "weight": "",
+        "notes": ""
+      },
+      "sizePreferences": {
+        "shirtSize": "",
+        "pantSize": "",
+        "kurtaSize": "",
+        "sherwaniSize": "",
+        "lehengaSize": ""
+      },
+      "orders": [],
+      "testimonials": [],
+      "createdAt": "2026-03-04T03:50:14.748Z",
+      "updatedAt": "2026-03-04T03:50:14.748Z"
+    }
+  ]
 }

@@ -2,7 +2,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Helper function for API calls
 const fetchWithAuth = async (endpoint, options = {}) => {
-  const token = localStorage.getItem('ranaji-admin-token');
+  // Try user token first, then admin token
+  const token = localStorage.getItem('ranaji-user-token') || localStorage.getItem('ranaji-admin-token');
   
   const config = {
     headers: {
@@ -28,13 +29,40 @@ const fetchWithAuth = async (endpoint, options = {}) => {
   }
 };
 
-// Auth API
+// Auth API (Admin)
 export const authAPI = {
   login: (credentials) => fetchWithAuth('/auth/login', {
     method: 'POST',
     body: JSON.stringify(credentials),
   }),
   verifyToken: () => fetchWithAuth('/auth/verify'),
+};
+
+// User API
+export const userAPI = {
+  register: (userData) => fetchWithAuth('/users/register', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+  }),
+  login: (credentials) => fetchWithAuth('/users/login', {
+    method: 'POST',
+    body: JSON.stringify(credentials),
+  }),
+  verifyToken: () => fetchWithAuth('/users/verify'),
+  getProfile: () => fetchWithAuth('/users/profile'),
+  updateProfile: (data) => fetchWithAuth('/users/profile', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  updatePassword: (data) => fetchWithAuth('/users/password', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  getOrders: () => fetchWithAuth('/users/orders'),
+  createOrder: (data) => fetchWithAuth('/users/orders', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
 };
 
 // Collections API
@@ -145,6 +173,7 @@ export const contactsAPI = {
 
 export default {
   auth: authAPI,
+  user: userAPI,
   collections: collectionsAPI,
   testimonials: testimonialsAPI,
   gallery: galleryAPI,

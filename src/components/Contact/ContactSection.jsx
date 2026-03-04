@@ -241,10 +241,10 @@ const ContactSection = () => {
                 </div>
               </div>
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3628.1234567890123!2d73.7123!3d24.5856!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3967e5b5b5b5b5b5%3A0x5b5b5b5b5b5b5b5b!2sRanaji!5e0!3m2!1sen!2sin!4v1234567890"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d17255.861809850703!2d73.72856411770356!3d24.603063198204225!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3967ef4b3f9e2db1%3A0x84791dcf81eddb9d!2sRanaji%20Wedding%20Showroom!5e0!3m2!1sen!2sin!4v1772596479180!5m2!1sen!2sin"
                 width="100%"
                 height="100%"
-                style={{ border: 0, filter: 'grayscale(100%) sepia(20%) brightness(0.8)', pointerEvents: 'none' }}
+                style={{ border: 0, filter: 'grayscale(100%) sepia(20%) brightness(0.8)' }}
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"

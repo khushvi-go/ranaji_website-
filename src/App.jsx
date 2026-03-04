@@ -28,6 +28,14 @@ import Services from './admin/pages/Services';
 import Bookings from './admin/pages/Bookings';
 import Contacts from './admin/pages/Contacts';
 
+// User imports
+import { UserProvider } from './context/UserContext';
+import UserLogin from './components/UserAuth/UserLogin';
+import UserRegister from './components/UserAuth/UserRegister';
+import UserProfile from './components/UserAuth/UserProfile';
+import CustomOrder from './components/UserAuth/CustomOrder';
+import UserTestimonial from './components/UserAuth/UserTestimonial';
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAdmin();
@@ -99,28 +107,37 @@ const MainWebsite = () => {
 function App() {
   return (
     <AdminProvider>
-      <Router>
-        <Routes>
-          {/* Main Website */}
-          <Route path="/" element={<MainWebsite />} />
-          
-          {/* Admin Routes */}
-          <Route path="/admin/login" element={<Login />} />
-          <Route path="/admin" element={
-            <ProtectedRoute>
-              <AdminLayout />
-            </ProtectedRoute>
-          }>
-            <Route index element={<Dashboard />} />
-            <Route path="collections" element={<Collections />} />
-            <Route path="testimonials" element={<Testimonials />} />
-            <Route path="gallery" element={<Gallery />} />
-            <Route path="services" element={<Services />} />
-            <Route path="bookings" element={<Bookings />} />
-            <Route path="contacts" element={<Contacts />} />
-          </Route>
-        </Routes>
-      </Router>
+      <UserProvider>
+        <Router>
+          <Routes>
+            {/* Main Website */}
+            <Route path="/" element={<MainWebsite />} />
+            
+            {/* User Auth Routes */}
+            <Route path="/login" element={<UserLogin />} />
+            <Route path="/register" element={<UserRegister />} />
+            <Route path="/profile" element={<UserProfile />} />
+            <Route path="/custom-order" element={<CustomOrder />} />
+            <Route path="/testimonials/write" element={<UserTestimonial />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<Login />} />
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Dashboard />} />
+              <Route path="collections" element={<Collections />} />
+              <Route path="testimonials" element={<Testimonials />} />
+              <Route path="gallery" element={<Gallery />} />
+              <Route path="services" element={<Services />} />
+              <Route path="bookings" element={<Bookings />} />
+              <Route path="contacts" element={<Contacts />} />
+            </Route>
+          </Routes>
+        </Router>
+      </UserProvider>
     </AdminProvider>
   );
 }

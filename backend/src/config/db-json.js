@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const UserModel = require('../models/User');
 
 const DATA_DIR = path.join(__dirname, '..', '..', 'data');
 
@@ -19,7 +20,8 @@ const initDB = () => {
       gallery: [],
       services: [],
       bookings: [],
-      contacts: []
+      contacts: [],
+      users: []
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2));
   }
@@ -143,6 +145,69 @@ const Service = new JSONModel('services');
 const Booking = new JSONModel('bookings');
 const Contact = new JSONModel('contacts');
 
+// User model with special methods
+const User = {
+  collection: 'users',
+  
+  findById(id) {
+    const db = readDB();
+    const userData = db.users?.find(u => u._id === id);
+    return userData ? new UserModel(userData) : null;
+  },
+  
+  findByEmail(email) {
+    const db = readDB();
+    const userData = db.users?.find(u => u.email === email);
+    return userData ? new UserModel(userData) : null;
+  },
+  
+  create(data) {
+    const db = readDB();
+    const user = new UserModel(data);
+    
+    if (!db.users) db.users = [];
+    db.users.push(user);
+    writeDB(db);
+    
+    return user;
+  },
+  
+  update(id, updateData) {
+    const db = readDB();
+    const index = db.users?.findIndex(u => u._id === id);
+    
+    if (index === -1 || index === undefined) return null;
+    
+    const user = new UserModel(db.users[index]);
+    user.update(updateData);
+    
+    db.users[index] = user;
+    writeDB(db);
+    
+    return user;
+  },
+  
+  addOrder(userId, order) {
+    const db = readDB();
+    const index = db.users?.findIndex(u => u._id === userId);
+    
+    if (index === -1 || index === undefined) return null;
+    
+    const user = new UserModel(db.users[index]);
+    user.addOrder(order);
+    
+    db.users[index] = user;
+    writeDB(db);
+    
+    return user;
+  },
+  
+  getAll() {
+    const db = readDB();
+    return (db.users || []).map(u => new UserModel(u));
+  }
+};
+
 const connectDB = async () => {
   initDB();
   console.log('📁 JSON Database Connected');
@@ -156,5 +221,6 @@ module.exports = {
   Gallery,
   Service,
   Booking,
-  Contact
+  Contact,
+  User
 };
