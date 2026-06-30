@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { User } = require('../config/db-json');
 const { authenticate } = require('../middleware/auth');
+const passport = require('passport');
 
 // Register new user
 router.post('/register', async (req, res) => {
@@ -69,6 +70,39 @@ router.post('/register', async (req, res) => {
     });
   }
 });
+router.get(
+  '/google',
+  passport.authenticate('google', {
+    scope: ['profile', 'email']
+  })
+);
+router.get(
+  '/google/callback',
+  passport.authenticate('google', {
+    session: false,
+    failureRedirect: '/login'
+  }),
+  async (req, res) => {
+    try {
+      const token = jwt.sign(
+        {
+          userId: req.user._id,
+          email: req.user.email,
+          role: req.user.role
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      res.redirect(
+        `${process.env.CLIENT_URL}/auth/success?token=${token}`
+      );
+    } catch (error) {
+      console.error(error);
+      res.redirect(`${process.env.CLIENT_URL}/login`);
+    }
+  }
+);
 
 // Login user
 router.post('/login', async (req, res) => {

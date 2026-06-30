@@ -15,7 +15,7 @@ import GallerySection from './components/Gallery/GallerySection';
 import ContactSection from './components/Contact/ContactSection';
 import Footer from './components/Footer/Footer';
 import ScrollProgress from './components/UI/ScrollProgress';
-
+import AuthSuccess from './components/UserAuth/AuthSuccess';
 // Admin imports
 import { AdminProvider, useAdmin } from './context/AdminContext';
 import AdminLayout from './admin/components/AdminLayout';
@@ -116,6 +116,7 @@ function App() {
             {/* User Auth Routes */}
             <Route path="/login" element={<UserLogin />} />
             <Route path="/register" element={<UserRegister />} />
+            <Route path="/auth/success" element={<AuthSuccess />} />
             <Route path="/profile" element={<UserProfile />} />
             <Route path="/custom-order" element={<CustomOrder />} />
             <Route path="/testimonials/write" element={<UserTestimonial />} />

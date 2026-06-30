@@ -5,6 +5,7 @@ import { Mail, Lock, Eye, EyeOff, Crown, User, Phone, ArrowRight, LogIn } from '
 import { useUser } from '../../context/UserContext';
 import toast from 'react-hot-toast';
 
+
 const UserRegister = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -99,6 +100,31 @@ const UserRegister = () => {
             <p className="text-cream/50 font-body text-sm">Create Account</p>
             <p className="text-cream/40 font-body text-xs mt-1">Join our royal family</p>
           </motion.div>
+          {/* Google Login */}
+          <button
+            type="button"
+            onClick={() =>
+              window.location.href = "http://localhost:5000/api/users/google"
+            }
+            className="w-full flex items-center justify-center gap-3 border border-[#DEA044] rounded-lg py-3 mb-5 hover:bg-[#DEA044]/10 transition"
+          >
+            <img
+              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+              alt="Google"
+              className="w-5 h-5"
+            />
+            Continue with Google
+          </button>
+
+          <div className="flex items-center my-5">
+            <div className="flex-grow border-t border-gold/20"></div>
+
+            <span className="mx-4 text-sm text-cream/40">
+              OR
+            </span>
+
+            <div className="flex-grow border-t border-gold/20"></div>
+          </div>
 
           {/* Register Form */}
           <form onSubmit={handleSubmit} className="space-y-5">

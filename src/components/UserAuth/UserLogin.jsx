@@ -73,6 +73,32 @@ const UserLogin = () => {
             <p className="text-cream/50 font-body text-sm">Welcome Back</p>
             <p className="text-cream/40 font-body text-xs mt-1">Sign in to your account</p>
           </motion.div>
+          {/* Google Login */}
+          <button
+            type="button"
+            onClick={() =>
+              window.location.href = "http://localhost:5000/api/users/google"
+            }
+            className="w-full flex items-center justify-center gap-3 border border-[#DEA044] rounded-lg py-3 mb-5 hover:bg-[#DEA044]/10 transition"
+          >
+            <img
+              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+              alt="Google"
+              className="w-5 h-5"
+            />
+            Continue with Google
+          </button>
+
+          <div className="flex items-center my-5">
+            <div className="flex-grow border-t border-gold/20"></div>
+
+            <span className="mx-4 text-sm text-cream/40">
+              OR
+            </span>
+
+            <div className="flex-grow border-t border-gold/20"></div>
+          </div>
+
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
