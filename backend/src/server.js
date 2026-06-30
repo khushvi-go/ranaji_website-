@@ -13,6 +13,9 @@ const serviceRoutes = require('./routes/services');
 const bookingRoutes = require('./routes/bookings');
 const contactRoutes = require('./routes/contacts');
 const userRoutes = require('./routes/users');
+const session = require('express-session');
+const passport = require('passport');
+require('./config/passport');
 
 // Initialize app
 const app = express();
@@ -35,6 +38,16 @@ if (process.env.NODE_ENV === 'development') {
     next();
   });
 }
+app.use(express.urlencoded({ extended: true }));
+app.use(session({
+  secret: process.env.SESSION_SECRET || "****WLFz",// Passport configuration
+  resave: false,
+  saveUninitialized: false
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 
 // API Routes
 app.use('/api/auth', authRoutes);

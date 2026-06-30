@@ -37,7 +37,10 @@ router.post('/register', async (req, res) => {
       email,
       password: hashedPassword,
       phone: phone || '',
-      role: 'user'
+      role: 'customer',
+      provider: 'local',
+      emailVerified: false,
+      lastLogin: new Date().toISOString()
     });
     
     // Generate JWT

@@ -134,14 +134,14 @@ const Navbar = () => {
               )}
               
               <motion.a
-                href="/admin"
+                href="/register"
                 className="flex items-center gap-2 px-4 py-2 bg-gold/10 border border-gold/30 text-gold rounded-lg hover:bg-gold/20 transition-colors"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                title="Admin Panel"
+                title="register"
               >
                 <Crown size={16} />
-                <span className="font-body text-sm">Admin</span>
+                <span className="font-body text-sm">register</span>
               </motion.a>
             </div>
 

@@ -5,9 +5,12 @@ class User {
     this.email = data.email || '';
     this.password = data.password || '';
     this.phone = data.phone || '';
-    this.role = data.role || 'user'; // 'user' or 'admin'
+    this.role = data.role || 'customer'; // 'customer' or 'admin'
     this.isActive = data.isActive !== undefined ? data.isActive : true;
-    
+    this.provider = data.provider || 'local';
+    this.googleId = data.googleId || '';
+    this.emailVerified = data.emailVerified || false;
+    this.lastLogin = data.lastLogin || null;
     // Profile Information
     this.profile = {
       avatar: data.profile?.avatar || '',

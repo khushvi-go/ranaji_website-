@@ -153,19 +153,7 @@ const Login = () => {
             </motion.button>
           </form>
 
-          {/* Default Credentials Hint */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="mt-8 p-4 bg-cream/5 border border-gold/10 rounded-lg"
-          >
-            <p className="text-cream/40 text-xs font-body text-center">
-              Default Credentials<br />
-              <span className="text-gold/60">Username: admin</span> | 
-              <span className="text-gold/60"> Password: ranaji123</span>
-            </p>
-          </motion.div>
+
 
           {/* Back to Website */}
           <motion.div
