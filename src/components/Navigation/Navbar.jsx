@@ -120,29 +120,32 @@ const Navbar = () => {
                   </motion.div>
                 </Link>
               ) : (
-                <Link to="/login">
-                  <motion.div
-                    className="flex items-center gap-2 px-4 py-2 bg-cream/10 border border-cream/30 text-cream rounded-lg hover:bg-cream/20 transition-colors cursor-pointer"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    title="Login"
-                  >
-                    <User size={16} />
-                    <span className="font-body text-sm">Login</span>
-                  </motion.div>
-                </Link>
-              )}
+                <>
+                  <Link to="/login">
+                    <motion.div
+                      className="flex items-center gap-2 px-4 py-2 bg-cream/10 border border-cream/30 text-cream rounded-lg hover:bg-cream/20 transition-colors cursor-pointer"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      title="Login"
+                    >
+                      <User size={16} />
+                      <span className="font-body text-sm">Login</span>
+                    </motion.div>
+                  </Link>
               
-              <motion.a
-                href="/register"
-                className="flex items-center gap-2 px-4 py-2 bg-gold/10 border border-gold/30 text-gold rounded-lg hover:bg-gold/20 transition-colors"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                title="register"
-              >
-                <Crown size={16} />
-                <span className="font-body text-sm">register</span>
-              </motion.a>
+                  <Link to="/register">
+                    <motion.div
+                      className="flex items-center gap-2 px-4 py-2 bg-gold/10 border border-gold/30 text-gold rounded-lg hover:bg-gold/20 transition-colors cursor-pointer"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      title="Register"
+                    >
+                      <Crown size={16} />
+                      <span className="font-body text-sm">Register</span>
+                    </motion.div>
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
