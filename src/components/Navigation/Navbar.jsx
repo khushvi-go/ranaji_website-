@@ -5,11 +5,15 @@ import { Link } from 'react-router-dom';
 import MobileMenu from './MobileMenu';
 import Logo from '../UI/Logo';
 import { useUser } from '../../context/UserContext';
+import getInitials from "../../utils/getInitials";
+
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isAuthenticated, user } = useUser();
+  const initials = getInitials(user?.name);
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -110,12 +114,13 @@ const Navbar = () => {
               {isAuthenticated ? (
                 <Link to="/profile">
                   <motion.div
-                    className="flex items-center gap-2 px-4 py-2 bg-gold/20 border border-gold/40 text-gold rounded-lg hover:bg-gold/30 transition-colors cursor-pointer"
+                    className="flex items-center gap-4 px-4 py-2 bg-gold/20 border border-gold/40 text-gold rounded-lg hover:bg-gold/30 transition-colors cursor-pointer"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     title="My Profile"
                   >
-                    <User size={16} />
+                    <div className ="w-9 h-9 rounded-full bg-black border border-gold tracking-wide text-gold flex items-center justify-center text-xs font-bold"
+                      >{initials || '?'}</div>
                     <span className="font-body text-sm">{user?.name?.split(' ')[0] || 'Profile'}</span>
                   </motion.div>
                 </Link>
