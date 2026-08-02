@@ -60,10 +60,10 @@ export const AdminProvider = ({ children }) => {
         servicesAPI.getAll('?active=true'),
       ]);
       
-      setCollections(collectionsRes.data || []);
-      setTestimonials(testimonialsRes.data || []);
-      setGallery(galleryRes.data || []);
-      setServices(servicesRes.data || []);
+      setCollections(collectionsRes || []);
+      setTestimonials(testimonialsRes || []);
+      setGallery(galleryRes || []);
+      setServices(servicesRes || []);
     } catch (error) {
       console.error('Error fetching public data:', error);
     }
@@ -79,8 +79,8 @@ export const AdminProvider = ({ children }) => {
         contactsAPI.getAll(),
       ]);
       
-      setBookings(bookingsRes.data || []);
-      setContacts(contactsRes.data || []);
+      setBookings(bookingsRes || []);
+      setContacts(contactsRes || []);
     } catch (error) {
       console.error('Error fetching admin data:', error);
     }
@@ -122,7 +122,7 @@ export const AdminProvider = ({ children }) => {
   const addCollection = async (collection) => {
     try {
       const response = await collectionsAPI.create(collection);
-      setCollections([...collections, response.data]);
+      setCollections([...collections, response]);
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
@@ -132,7 +132,7 @@ export const AdminProvider = ({ children }) => {
   const updateCollection = async (id, updatedData) => {
     try {
       const response = await collectionsAPI.update(id, updatedData);
-      setCollections(collections.map(c => c._id === id ? response.data : c));
+      setCollections(collections.map(c => c._id === id ? response : c));
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
@@ -153,7 +153,7 @@ export const AdminProvider = ({ children }) => {
   const addTestimonial = async (testimonial) => {
     try {
       const response = await testimonialsAPI.create(testimonial);
-      setTestimonials([...testimonials, response.data]);
+      setTestimonials([...testimonials, response]);
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
@@ -163,7 +163,7 @@ export const AdminProvider = ({ children }) => {
   const updateTestimonial = async (id, updatedData) => {
     try {
       const response = await testimonialsAPI.update(id, updatedData);
-      setTestimonials(testimonials.map(t => t._id === id ? response.data : t));
+      setTestimonials(testimonials.map(t => t._id === id ? response : t));
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
@@ -184,7 +184,7 @@ export const AdminProvider = ({ children }) => {
   const addGalleryImage = async (image) => {
     try {
       const response = await galleryAPI.create(image);
-      setGallery([...gallery, response.data]);
+      setGallery([...gallery, response]);
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
@@ -194,7 +194,7 @@ export const AdminProvider = ({ children }) => {
   const updateGalleryImage = async (id, updatedData) => {
     try {
       const response = await galleryAPI.update(id, updatedData);
-      setGallery(gallery.map(g => g._id === id ? response.data : g));
+      setGallery(gallery.map(g => g._id === id ? response : g));
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
@@ -215,7 +215,7 @@ export const AdminProvider = ({ children }) => {
   const addService = async (service) => {
     try {
       const response = await servicesAPI.create(service);
-      setServices([...services, response.data]);
+      setServices([...services, response]);
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
@@ -225,7 +225,7 @@ export const AdminProvider = ({ children }) => {
   const updateService = async (id, updatedData) => {
     try {
       const response = await servicesAPI.update(id, updatedData);
-      setServices(services.map(s => s._id === id ? response.data : s));
+      setServices(services.map(s => s._id === id ? response : s));
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
@@ -246,7 +246,7 @@ export const AdminProvider = ({ children }) => {
   const addBooking = async (booking) => {
     try {
       const response = await bookingsAPI.create(booking);
-      setBookings([...bookings, response.data]);
+      setBookings([...bookings, response]);
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
@@ -256,7 +256,7 @@ export const AdminProvider = ({ children }) => {
   const updateBookingStatus = async (id, status) => {
     try {
       const response = await bookingsAPI.update(id, { status });
-      setBookings(bookings.map(b => b._id === id ? response.data : b));
+      setBookings(bookings.map(b => b._id === id ? response : b));
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
@@ -277,7 +277,7 @@ export const AdminProvider = ({ children }) => {
   const addContact = async (contact) => {
     try {
       const response = await contactsAPI.create(contact);
-      setContacts([...contacts, response.data]);
+      setContacts([...contacts, response]);
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
@@ -287,7 +287,7 @@ export const AdminProvider = ({ children }) => {
   const markContactAsRead = async (id) => {
     try {
       const response = await contactsAPI.markAsRead(id);
-      setContacts(contacts.map(c => c._id === id ? response.data : c));
+      setContacts(contacts.map(c => c._id === id ? response : c));
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };

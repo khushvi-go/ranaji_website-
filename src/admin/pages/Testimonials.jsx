@@ -154,7 +154,7 @@ const Testimonials = () => {
   const handleSave = (data) => {
     // Generate avatar from name if not provided
     const avatar = data.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    const dataWithAvatar = { ...data, avatar };
+    const dataWithAvatar = { .., avatar };
     
     if (editingTestimonial) {
       updateTestimonial(editingTestimonial.id, dataWithAvatar);
