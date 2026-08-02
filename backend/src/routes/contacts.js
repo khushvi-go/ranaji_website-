@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Contact } = require('../config/db-json');
+const Contact = require("../models/Contact");
 const { authenticate } = require('../middleware/auth');
 
 // GET all contacts (protected)
@@ -12,8 +12,25 @@ router.get('/', authenticate, async (req, res) => {
     if (read === 'true') query.read = true;
     if (read === 'false') query.read = false;
     
-    const contacts = Contact.find(query).sort({ createdAt: -1 }).data;
+    const contacts = await Contact.find(query).sort({ createdAt: -1 });
     res.json({ success: true, count: contacts.length, data: contacts });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// GET contact stats (protected)
+router.get('/stats/overview', authenticate, async (req, res) => {
+  try {
+    const total = await Contact.countDocuments();
+    const unread = await Contact.countDocuments({ read: false });
+    const read = await Contact.countDocuments({ read: true });
+    const replied = await Contact.countDocuments({ replied: true });
+    
+    res.json({
+      success: true,
+      data: { total, unread, read, replied }
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -84,23 +101,6 @@ router.delete('/:id', authenticate, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Contact not found' });
     }
     res.json({ success: true, message: 'Contact deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// GET contact stats (protected)
-router.get('/stats/overview', authenticate, async (req, res) => {
-  try {
-    const total = await Contact.countDocuments();
-    const unread = await Contact.countDocuments({ read: false });
-    const read = await Contact.countDocuments({ read: true });
-    const replied = await Contact.countDocuments({ replied: true });
-    
-    res.json({
-      success: true,
-      data: { total, unread, read, replied }
-    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

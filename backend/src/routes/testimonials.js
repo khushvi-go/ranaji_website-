@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Testimonial } = require('../config/db-json');
+const Testimonial = require("../models/Testimonial");
 const { authenticate } = require('../middleware/auth');
 
 // GET all testimonials (public)
@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
     
     if (active === 'true') query.isActive = true;
     
-    const testimonials = Testimonial.find(query).sort({ createdAt: -1 }).data;
+    const testimonials = await Testimonial.find(query).sort({ createdAt: -1 });
     res.json({ success: true, count: testimonials.length, data: testimonials });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

@@ -1,12 +1,18 @@
 require('dotenv').config();
+const helmet = require("helmet");
+const compression = require("compression");
+const rateLimit = require("express-rate-limit");
+const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
 const express = require('express');
 const cors = require('cors');
-const { connectDB, Collection, Testimonial, Gallery, Service, Booking, Contact, User } = require('./config/db-json');
+const connectDB = require("./config/database");
 const { errorHandler, notFound } = require('./middleware/errorHandler');
+const categoryRoutes = require("./routes/categories");
 
 // Import routes
 const authRoutes = require('./routes/auth');
-const collectionRoutes = require('./routes/collections');
+const productRoutes = require("./routes/products");
 const testimonialRoutes = require('./routes/testimonials');
 const galleryRoutes = require('./routes/gallery');
 const serviceRoutes = require('./routes/services');
@@ -15,13 +21,24 @@ const contactRoutes = require('./routes/contacts');
 const userRoutes = require('./routes/users');
 const session = require('express-session');
 const passport = require('passport');
+// const MongoStore = require("connect-mongo");
 require('./config/passport');
 
 // Initialize app
 const app = express();
+app.use(helmet());
+app.use(compression());
+app.use(cookieParser());
 
-// Connect to database
-connectDB();
+app.use(morgan("dev"));
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+});
+
+app.use(limiter);
+
 
 // Middleware
 app.use(cors({
@@ -29,20 +46,20 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
 app.use(express.urlencoded({ extended: true }));
 
-// Request logging (development)
-if (process.env.NODE_ENV === 'development') {
-  app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-    next();
-  });
-}
-app.use(express.urlencoded({ extended: true }));
 app.use(session({
-  secret: process.env.SESSION_SECRET || "****WLFz",// Passport configuration
+  secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax"
+  }
 }));
 
 app.use(passport.initialize());
@@ -52,7 +69,8 @@ app.use(passport.session());
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/collections', collectionRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/categories", categoryRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/services', serviceRoutes);
@@ -95,19 +113,28 @@ app.use(errorHandler);
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`
-╔════════════════════════════════════════════════╗
-║                                                ║
-║       🎩 RANAJI API SERVER RUNNING 🎩          ║
-║                                                ║
-║   Server: http://localhost:${PORT}              ${PORT === 5000 ? ' ' : ''} ║
-║   Environment: ${(process.env.NODE_ENV || 'development').padEnd(24)} ║
-║                                                ║
-╚════════════════════════════════════════════════╝
-  `);
-});
 
+const startServer = async () => {
+  try {
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`
+╔════════════════════════════════════════════════╗
+║       🎩 RANAJI API SERVER RUNNING 🎩         ║
+║   Server: http://localhost:${PORT}
+╚════════════════════════════════════════════════╝
+      `);
+    });
+
+  } catch (error) {
+    console.error("Failed to start server");
+    console.error(error);
+    process.exit(1);
+  }
+};
+
+startServer();
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Rejection:', err.message);

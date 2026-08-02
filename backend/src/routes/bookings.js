@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Booking } = require('../config/db-json');
+const Booking = require("../models/Booking");
 const { authenticate } = require('../middleware/auth');
 
 // GET all bookings (protected)
@@ -11,13 +11,29 @@ router.get('/', authenticate, async (req, res) => {
     
     if (status) query.status = status.toLowerCase();
     
-    const bookings = Booking.find(query).sort({ createdAt: -1 }).data;
+    const bookings = await Booking.find(query).sort({ createdAt: -1 });
     res.json({ success: true, count: bookings.length, data: bookings });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
+router.get('/stats/overview', authenticate, async (req, res) => {
+  try {
+    const total = await Booking.countDocuments();
+    const pending = await Booking.countDocuments({ status: 'pending' });
+    const confirmed = await Booking.countDocuments({ status: 'confirmed' });
+    const completed = await Booking.countDocuments({ status: 'completed' });
+    const cancelled = await Booking.countDocuments({ status: 'cancelled' });
+    
+    res.json({
+      success: true,
+      data: { total, pending, confirmed, completed, cancelled }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 // GET single booking (protected)
 router.get('/:id', authenticate, async (req, res) => {
   try {
@@ -71,22 +87,5 @@ router.delete('/:id', authenticate, async (req, res) => {
   }
 });
 
-// GET booking stats (protected)
-router.get('/stats/overview', authenticate, async (req, res) => {
-  try {
-    const total = await Booking.countDocuments();
-    const pending = await Booking.countDocuments({ status: 'pending' });
-    const confirmed = await Booking.countDocuments({ status: 'confirmed' });
-    const completed = await Booking.countDocuments({ status: 'completed' });
-    const cancelled = await Booking.countDocuments({ status: 'cancelled' });
-    
-    res.json({
-      success: true,
-      data: { total, pending, confirmed, completed, cancelled }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
 
 module.exports = router;

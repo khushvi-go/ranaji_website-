@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Service } = require('../config/db-json');
+const Service = require("../models/Service");
 const { authenticate } = require('../middleware/auth');
 
 // GET all services (public)
@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
     
     if (active === 'true') query.isActive = true;
     
-    const services = Service.find(query).sort({ order: 1 }).data;
+    const services = Service.find(query).sort({ order: 1 });
     res.json({ success: true, count: services.length, data: services });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

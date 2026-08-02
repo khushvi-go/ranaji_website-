@@ -1,14 +1,19 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 require('dotenv').config();
-const { User } = require('../config/db-json');
+const User = require("../models/User");
 
 passport.serializeUser((user, done) => {
-    done(null, user);
+    done(null, user._id);
 });
 
-passport.deserializeUser((user, done) => {
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
     done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
 });
 passport.use(
     new GoogleStrategy(

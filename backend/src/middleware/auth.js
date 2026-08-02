@@ -1,99 +1,162 @@
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
+// =========================
 // JWT Authentication Middleware
-const authenticate = (req, res, next) => {
+// =========================
+const authenticate = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+
     if (!token) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Access denied. No token provided.' 
+      return res.status(401).json({
+        success: false,
+        message: "Access denied. No token provided."
       });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found."
+      });
+    }
+
+    req.user = user;
+
     next();
-  } catch (error) {
-    res.status(401).json({ 
-      success: false, 
-      message: 'Invalid token' 
+
+  } catch (err) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired token."
     });
   }
 };
 
+// =========================
 // Admin Login
+// =========================
 const login = async (req, res) => {
   try {
-    const { username, password } = req.body;
 
-    // Check if credentials match environment variables
-    if (username !== process.env.ADMIN_USERNAME) {
-      return res.status(401).json({
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
         success: false,
-        message: 'Invalid credentials'
+        message: "Email and password are required."
       });
     }
 
-    // For initial setup, compare plain password
-    // In production, use bcrypt.compare(password, hashedPassword)
-    const isMatch = password === 'ranaji123'; // Temporary plain text check
-    
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password."
+      });
+    }
+
+    if (user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied."
+      });
+    }
+
+    const isMatch = await user.comparePassword(password);
+
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: "Invalid email or password."
       });
     }
 
-    // Generate JWT
+    user.lastLogin = new Date();
+    await user.save();
+
     const token = jwt.sign(
-      { 
-        username,
-        role: 'admin',
-        iat: Math.floor(Date.now() / 1000)
+      {
+        id: user._id,
+        role: user.role
       },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE || '7d' }
+      {
+        expiresIn: process.env.JWT_EXPIRE || "7d"
+      }
     );
 
     res.json({
       success: true,
       token,
       user: {
-        username,
-        role: 'admin'
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
       }
     });
-  } catch (error) {
+
+  } catch (err) {
+
+    console.error(err);
+
     res.status(500).json({
       success: false,
-      message: 'Server error',
-      error: error.message
+      message: "Internal Server Error"
     });
+
   }
 };
 
-// Verify token endpoint
-const verifyToken = (req, res) => {
+// =========================
+// Verify Token
+// =========================
+const verifyToken = async (req, res) => {
+
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+
     if (!token) {
-      return res.json({ success: false, valid: false });
+      return res.json({
+        success: false,
+        valid: false
+      });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    res.json({ 
-      success: true, 
+
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return res.json({
+        success: false,
+        valid: false
+      });
+    }
+
+    res.json({
+      success: true,
       valid: true,
-      user: decoded 
+      user
     });
-  } catch (error) {
-    res.json({ success: false, valid: false });
+
+  } catch (err) {
+
+    res.json({
+      success: false,
+      valid: false
+    });
+
   }
+
 };
 
 module.exports = {
