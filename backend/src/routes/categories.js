@@ -7,13 +7,65 @@ const { authenticate } = require("../middleware/auth");
 // Get all categories
 router.get("/", async (req, res) => {
   try {
-    const categories = await Category.find().sort({ createdAt: -1 });
+    const {
+      search,
+      active,
+      sort,
+      page,
+      limit  
+    } = req.query;
+    let query = {};
 
-    res.json({
-      success: true,
-      count: categories.length,
-      data: categories
-    });
+    if (active === "true")
+      query.isActive = true;
+    
+    if (search) {
+      query.name = {
+        $regex: search,
+        $options: "i"
+      };
+    }
+    const pageNumber = Math.max(1, Number(page) || 1);
+    const pageSize = Math.min(50, Math.max(1, Number(limit) || 10));
+    
+    const skip = (pageNumber - 1) * pageSize;
+    let sortOption = { createdAt: -1 };
+    
+    switch (sort) {
+    
+      case "oldest":
+        sortOption = { createdAt: 1 };
+        break;
+    
+      case "name-asc":
+        sortOption = { name: 1 };
+        break;
+    
+      case "name-desc":
+        sortOption = { name: -1 };
+        break;
+    
+    }
+    default:
+      sortOption = { createdAt: -1 };
+      break;
+    const total = await Category.countDocuments(query);
+    
+    const categories = await Category.find(query)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(pageSize);
+      res.json({
+        success: true,
+        total,
+        page: pageNumber,
+        pages: Math.ceil(total / pageSize),
+        count: categories.length,
+        data: categories
+
+        
+      });
+
 
   } catch (err) {
     res.status(500).json({
@@ -21,6 +73,8 @@ router.get("/", async (req, res) => {
       message: err.message
     });
   }
+
+
 });
 
 // Get single category

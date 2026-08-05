@@ -29,8 +29,14 @@ const ProductSchema = new mongoose.Schema(
     },
 
     price: {
-      type: Number,
-      required: true
+      purchasePrice: {
+        type: Number,
+        default: null
+      },
+      rentPrice: {
+        type: Number,
+        default: null
+      }
     },
 
     discountPrice: {
@@ -41,7 +47,7 @@ const ProductSchema = new mongoose.Schema(
     images: [
       {
         url: String,
-        public_id: String
+        publicId: String
       }
     ],
 
@@ -72,12 +78,24 @@ const ProductSchema = new mongoose.Schema(
       type: String,
       enum: ["Men", "Women", "Unisex"]
     },
-
-    fabric: String,
+    availableFor: {
+      type: [String],
+      enum: ["rent", "purchase"],
+      default: ["purchase"]
+    },
+    stock: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
 
     occasion: String,
 
-    tags: [String],
+    tags: [{
+      type: String,
+      trim: true,
+      lowercase: true
+    }],
 
     averageRating: {
       type: Number,
@@ -89,10 +107,25 @@ const ProductSchema = new mongoose.Schema(
       default: 0
     },
 
-    isActive: {
+    seo: {
+      title: String,
+      description: String
+    },
+
+    customTailoring: {
       type: Boolean,
-      default: true
-    }
+      default: false
+    },
+
+    status: {
+      type: String,
+      enum: [
+          "draft",
+          "published",
+          "out_of_stock"
+      ],
+      default: "draft"
+    },
 
   },
   {
