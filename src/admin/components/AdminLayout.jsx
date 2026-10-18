@@ -13,7 +13,10 @@ import {
   Menu,
   X,
   Crown,
-  Tags
+  Tags,
+  Receipt,
+  Package,
+  Users
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 
@@ -29,14 +32,18 @@ const AdminLayout = () => {
   };
 
   const menuItems = [
-    { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
-    { path: '/admin/collections', icon: ShoppingBag, label: 'Collections' },
+    { path: '/admin', icon: LayoutDashboard, label: 'Overview', exact: true },
+    { path: '/admin/pos', icon: Receipt, label: 'Point of Sale (POS)', counterBadge: 'COUNTER' },
+    { path: '/admin/sales', icon: Receipt, label: 'Sales & Invoices' },
+    { path: '/admin/inventory', icon: Package, label: 'Garment Inventory' },
+    { path: '/admin/customers', icon: Users, label: 'Showroom Clients' },
+    { path: '/admin/collections', icon: ShoppingBag, label: 'Garment Outfits' },
     { path: '/admin/categories', icon: Tags, label: 'Categories' },
     { path: '/admin/testimonials', icon: MessageSquare, label: 'Testimonials' },
-    { path: '/admin/gallery', icon: Image, label: 'Gallery' },
-    { path: '/admin/services', icon: Briefcase, label: 'Services' },
+    { path: '/admin/gallery', icon: Image, label: 'Showcase Gallery' },
+    { path: '/admin/services', icon: Briefcase, label: 'Royal Services' },
     { path: '/admin/bookings', icon: Calendar, label: 'Bookings', badge: stats.pendingBookings },
-    { path: '/admin/contacts', icon: Mail, label: 'Messages', badge: stats.unreadContacts },
+    { path: '/admin/contacts', icon: Mail, label: 'Inquiries', badge: stats.unreadContacts },
   ];
 
   return (
@@ -102,6 +109,11 @@ const AdminLayout = () => {
               {item.badge > 0 && (
                 <span className={`absolute ${isSidebarOpen ? 'right-3' : 'right-2'} bg-crimson text-cream text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium`}>
                   {item.badge}
+                </span>
+              )}
+              {isSidebarOpen && item.counterBadge && (
+                <span className="ml-auto bg-gradient-to-r from-gold to-copper text-night text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm">
+                  {item.counterBadge}
                 </span>
               )}
             </NavLink>
@@ -204,6 +216,11 @@ const AdminLayout = () => {
                   {item.badge > 0 && (
                     <span className="bg-crimson text-cream text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">
                       {item.badge}
+                    </span>
+                  )}
+                  {item.counterBadge && (
+                    <span className="bg-gradient-to-r from-gold to-copper text-night text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">
+                      {item.counterBadge}
                     </span>
                   )}
                 </NavLink>

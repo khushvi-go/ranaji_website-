@@ -20,6 +20,7 @@ import AuthSuccess from './components/UserAuth/AuthSuccess';
 // Shop & Cart imports
 import { ShopProvider } from './context/ShopContext';
 import { CartProvider } from './context/CartContext';
+import { BusinessProvider } from './context/BusinessContext';
 import ShopPage from './pages/ShopPage';
 import ProductDetailsModal from './components/Shop/ProductDetailsModal';
 import CartDrawer from './components/Shop/CartDrawer';
@@ -30,6 +31,10 @@ import { AdminProvider, useAdmin } from './context/AdminContext';
 import AdminLayout from './admin/components/AdminLayout';
 import Login from './admin/pages/Login';
 import Dashboard from './admin/pages/Dashboard';
+import POS from './admin/pages/POS';
+import SalesInvoices from './admin/pages/SalesInvoices';
+import Inventory from './admin/pages/Inventory';
+import Customers from './admin/pages/Customers';
 import Collections from './admin/pages/Collections';
 import Categories from './admin/pages/Categories';
 import Testimonials from './admin/pages/Testimonials';
@@ -102,40 +107,45 @@ function App() {
     <AdminProvider>
       <UserProvider>
         <ShopProvider>
-          <CartProvider>
-            <Router>
-              <Routes>
-                {/* Main Showcase Website */}
-                <Route path="/" element={<MainWebsite />} />
-                
-                {/* Dedicated Royal Shop Catalog */}
-                <Route path="/shop" element={<ShopPage />} />
-                
-                {/* User Auth Routes */}
-                <Route path="/login" element={<UserLogin />} />
-                <Route path="/register" element={<UserRegister />} />
-                <Route path="/auth/success" element={<AuthSuccess />} />
-                <Route path="/profile" element={<UserProfile />} />
-                <Route path="/custom-order" element={<CustomOrder />} />
-                <Route path="/testimonials/write" element={<UserTestimonial />} />
-                
-                {/* Admin Routes */}
-                <Route path="/admin/login" element={<Login />} />
-                <Route path="/admin" element={
-                  <ProtectedRoute>
-                    <AdminLayout />
-                  </ProtectedRoute>
-                }>
-                  <Route index element={<Dashboard />} />
-                  <Route path="collections" element={<Collections />} />
-                  <Route path="categories" element={<Categories />} />
-                  <Route path="testimonials" element={<Testimonials />} />
-                  <Route path="gallery" element={<Gallery />} />
-                  <Route path="services" element={<Services />} />
-                  <Route path="bookings" element={<Bookings />} />
-                  <Route path="contacts" element={<Contacts />} />
-                </Route>
-              </Routes>
+          <BusinessProvider>
+            <CartProvider>
+              <Router>
+                <Routes>
+                  {/* Main Showcase Website */}
+                  <Route path="/" element={<MainWebsite />} />
+                  
+                  {/* Dedicated Royal Shop Catalog */}
+                  <Route path="/shop" element={<ShopPage />} />
+                  
+                  {/* User Auth Routes */}
+                  <Route path="/login" element={<UserLogin />} />
+                  <Route path="/register" element={<UserRegister />} />
+                  <Route path="/auth/success" element={<AuthSuccess />} />
+                  <Route path="/profile" element={<UserProfile />} />
+                  <Route path="/custom-order" element={<CustomOrder />} />
+                  <Route path="/testimonials/write" element={<UserTestimonial />} />
+                  
+                  {/* Admin & Showroom Routes */}
+                  <Route path="/admin/login" element={<Login />} />
+                  <Route path="/admin" element={
+                    <ProtectedRoute>
+                      <AdminLayout />
+                    </ProtectedRoute>
+                  }>
+                    <Route index element={<Dashboard />} />
+                    <Route path="pos" element={<POS />} />
+                    <Route path="sales" element={<SalesInvoices />} />
+                    <Route path="inventory" element={<Inventory />} />
+                    <Route path="customers" element={<Customers />} />
+                    <Route path="collections" element={<Collections />} />
+                    <Route path="categories" element={<Categories />} />
+                    <Route path="testimonials" element={<Testimonials />} />
+                    <Route path="gallery" element={<Gallery />} />
+                    <Route path="services" element={<Services />} />
+                    <Route path="bookings" element={<Bookings />} />
+                    <Route path="contacts" element={<Contacts />} />
+                  </Route>
+                </Routes>
 
               {/* Global E-Commerce Modals & Overlays */}
               <ProductDetailsModal />
@@ -162,6 +172,7 @@ function App() {
               />
             </Router>
           </CartProvider>
+          </BusinessProvider>
         </ShopProvider>
       </UserProvider>
     </AdminProvider>
