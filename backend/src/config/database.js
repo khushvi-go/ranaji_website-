@@ -1,20 +1,40 @@
 const mongoose = require("mongoose");
 
 const connectDB = async () => {
-  try {
-    console.log("Connecting to:", process.env.MONGO_URI.replace(/\/\/.*@/, "//*****@"));
+  const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
 
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 10000
+  if (!uri) {
+    console.warn("⚠️ MONGO_URI is not defined in environment variables.");
+    console.log("ℹ️ Attempting in-memory database fallback...");
+    try {
+      const memoryDB = require("./db-memory");
+      return await memoryDB();
+    } catch (e) {
+      console.warn("⚠️ In-memory database unavailable. Continuing with local API adapters.");
+      return null;
+    }
+  }
+
+  try {
+    const masked = uri.replace(/\/\/.*@/, "//*****@");
+    console.log("Connecting to MongoDB:", masked);
+
+    const conn = await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 5000
     });
 
-    console.log("✅ MongoDB Connected");
-    console.log(conn.connection.host);
-
+    console.log("✅ MongoDB Connected:", conn.connection.host);
+    return conn;
   } catch (err) {
-    console.error("❌ FULL ERROR:");
-    console.error(err);
-    process.exit(1);
+    console.warn("⚠️ MongoDB Connection failed:", err.message);
+    try {
+      const memoryDB = require("./db-memory");
+      console.log("ℹ️ Falling back to in-memory MongoDB...");
+      return await memoryDB();
+    } catch (e) {
+      console.warn("⚠️ Running in offline database mode.");
+      return null;
+    }
   }
 };
 

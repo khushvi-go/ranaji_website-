@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
     
     if (active === 'true') query.isActive = true;
     
-    const services = Service.find(query).sort({ order: 1 });
+    const services = await Service.find(query).sort({ order: 1 });
     res.json({ success: true, count: services.length, data: services });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

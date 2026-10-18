@@ -32,23 +32,19 @@ router.get("/", async (req, res) => {
     let sortOption = { createdAt: -1 };
     
     switch (sort) {
-    
       case "oldest":
         sortOption = { createdAt: 1 };
         break;
-    
       case "name-asc":
         sortOption = { name: 1 };
         break;
-    
       case "name-desc":
         sortOption = { name: -1 };
         break;
-    
+      default:
+        sortOption = { createdAt: -1 };
+        break;
     }
-    default:
-      sortOption = { createdAt: -1 };
-      break;
     const total = await Category.countDocuments(query);
     
     const categories = await Category.find(query)

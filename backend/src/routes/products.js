@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const upload = require("../middleware/upload");
-const Product = require("../models/Product");
+const Product = require("../models/product");
 const { authenticate } = require("../middleware/auth");
 
 // GET all products
@@ -41,6 +41,25 @@ router.get("/", async (req, res) => {
       ];
     }
 
+    let sortOption = { createdAt: -1 };
+
+    switch (sort) {
+      case "price-low":
+        sortOption = { "price.purchasePrice": 1 };
+        break;
+      case "price-high":
+        sortOption = { "price.purchasePrice": -1 };
+        break;
+      case "rating":
+        sortOption = { averageRating: -1 };
+        break;
+      case "oldest":
+        sortOption = { createdAt: 1 };
+        break;
+      default:
+        sortOption = { createdAt: -1 };
+    }
+
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 12));
     
@@ -68,28 +87,6 @@ router.get("/", async (req, res) => {
       message: err.message,
     });
   }
-  let sortOption = { createdAt: -1 };
-
-switch (sort) {
-  case "price-low":
-    sortOption = { "price.purchasePrice": 1 };
-    break;
-
-  case "price-high":
-    sortOption = { "price.purchasePrice": -1 };
-    break;
-
-  case "rating":
-    sortOption = { averageRating: -1 };
-    break;
-
-  case "oldest":
-    sortOption = { createdAt: 1 };
-    break;
-
-  default:
-    sortOption = { createdAt: -1 };
-}
 });
 
 // GET single product

@@ -29,11 +29,15 @@ const CategorySchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true
-    }
+    },
     featured: {
       type: Boolean,
       default: false
-    }
+    },
+    subcategories: [{
+      type: String,
+      trim: true
+    }]
   },
   {
     timestamps: true
