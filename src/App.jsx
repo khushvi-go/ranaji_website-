@@ -16,12 +16,22 @@ import ContactSection from './components/Contact/ContactSection';
 import Footer from './components/Footer/Footer';
 import ScrollProgress from './components/UI/ScrollProgress';
 import AuthSuccess from './components/UserAuth/AuthSuccess';
+
+// Shop & Cart imports
+import { ShopProvider } from './context/ShopContext';
+import { CartProvider } from './context/CartContext';
+import ShopPage from './pages/ShopPage';
+import ProductDetailsModal from './components/Shop/ProductDetailsModal';
+import CartDrawer from './components/Shop/CartDrawer';
+import CheckoutModal from './components/Shop/CheckoutModal';
+
 // Admin imports
 import { AdminProvider, useAdmin } from './context/AdminContext';
 import AdminLayout from './admin/components/AdminLayout';
 import Login from './admin/pages/Login';
 import Dashboard from './admin/pages/Dashboard';
 import Collections from './admin/pages/Collections';
+import Categories from './admin/pages/Categories';
 import Testimonials from './admin/pages/Testimonials';
 import Gallery from './admin/pages/Gallery';
 import Services from './admin/pages/Services';
@@ -81,23 +91,6 @@ const MainWebsite = () => {
             <ContactSection />
           </main>
           <Footer />
-          <Toaster
-            position="bottom-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#1C1208',
-                color: '#F5EFE0',
-                border: '1px solid #DEA044',
-              },
-              success: {
-                iconTheme: {
-                  primary: '#DEA044',
-                  secondary: '#1C1208',
-                },
-              },
-            }}
-          />
         </>
       )}
     </div>
@@ -108,36 +101,68 @@ function App() {
   return (
     <AdminProvider>
       <UserProvider>
-        <Router>
-          <Routes>
-            {/* Main Website */}
-            <Route path="/" element={<MainWebsite />} />
-            
-            {/* User Auth Routes */}
-            <Route path="/login" element={<UserLogin />} />
-            <Route path="/register" element={<UserRegister />} />
-            <Route path="/auth/success" element={<AuthSuccess />} />
-            <Route path="/profile" element={<UserProfile />} />
-            <Route path="/custom-order" element={<CustomOrder />} />
-            <Route path="/testimonials/write" element={<UserTestimonial />} />
-            
-            {/* Admin Routes */}
-            <Route path="/admin/login" element={<Login />} />
-            <Route path="/admin" element={
-              <ProtectedRoute>
-                <AdminLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Dashboard />} />
-              <Route path="collections" element={<Collections />} />
-              <Route path="testimonials" element={<Testimonials />} />
-              <Route path="gallery" element={<Gallery />} />
-              <Route path="services" element={<Services />} />
-              <Route path="bookings" element={<Bookings />} />
-              <Route path="contacts" element={<Contacts />} />
-            </Route>
-          </Routes>
-        </Router>
+        <ShopProvider>
+          <CartProvider>
+            <Router>
+              <Routes>
+                {/* Main Showcase Website */}
+                <Route path="/" element={<MainWebsite />} />
+                
+                {/* Dedicated Royal Shop Catalog */}
+                <Route path="/shop" element={<ShopPage />} />
+                
+                {/* User Auth Routes */}
+                <Route path="/login" element={<UserLogin />} />
+                <Route path="/register" element={<UserRegister />} />
+                <Route path="/auth/success" element={<AuthSuccess />} />
+                <Route path="/profile" element={<UserProfile />} />
+                <Route path="/custom-order" element={<CustomOrder />} />
+                <Route path="/testimonials/write" element={<UserTestimonial />} />
+                
+                {/* Admin Routes */}
+                <Route path="/admin/login" element={<Login />} />
+                <Route path="/admin" element={
+                  <ProtectedRoute>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }>
+                  <Route index element={<Dashboard />} />
+                  <Route path="collections" element={<Collections />} />
+                  <Route path="categories" element={<Categories />} />
+                  <Route path="testimonials" element={<Testimonials />} />
+                  <Route path="gallery" element={<Gallery />} />
+                  <Route path="services" element={<Services />} />
+                  <Route path="bookings" element={<Bookings />} />
+                  <Route path="contacts" element={<Contacts />} />
+                </Route>
+              </Routes>
+
+              {/* Global E-Commerce Modals & Overlays */}
+              <ProductDetailsModal />
+              <CartDrawer />
+              <CheckoutModal />
+
+              {/* Global Royal Notifications */}
+              <Toaster
+                position="bottom-right"
+                toastOptions={{
+                  duration: 4000,
+                  style: {
+                    background: '#1C1208',
+                    color: '#F5EFE0',
+                    border: '1px solid #DEA044',
+                  },
+                  success: {
+                    iconTheme: {
+                      primary: '#DEA044',
+                      secondary: '#1C1208',
+                    },
+                  },
+                }}
+              />
+            </Router>
+          </CartProvider>
+        </ShopProvider>
       </UserProvider>
     </AdminProvider>
   );

@@ -547,45 +547,100 @@ const UserProfile = () => {
               )}
 
               {/* Orders Tab */}
-              {activeTab === 'orders' && (
-                <div className="space-y-6">
-                  {user.orders && user.orders.length > 0 ? (
-                    <div className="space-y-4">
-                      {user.orders.map((order) => (
-                        <div key={order.orderId} className="bg-cream/5 border border-gold/10 rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-gold font-body text-sm">{order.orderId}</span>
-                            <span className={`px-3 py-1 rounded-full text-xs font-body ${
-                              order.status === 'delivered' ? 'bg-green-500/20 text-green-400' :
-                              order.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                              'bg-blue-500/20 text-blue-400'
-                            }`}>
-                              {order.status}
-                            </span>
+              {activeTab === 'orders' && (() => {
+                const localOrders = (() => {
+                  try {
+                    return JSON.parse(localStorage.getItem('ranaji_user_orders') || '[]');
+                  } catch (e) {
+                    return [];
+                  }
+                })();
+                const allOrders = [...(user.orders || []), ...localOrders];
+
+                return (
+                  <div className="space-y-6">
+                    {allOrders.length > 0 ? (
+                      <div className="space-y-4">
+                        {allOrders.map((order, idx) => (
+                          <div key={order.orderId || idx} className="bg-cream/5 border border-gold/20 rounded-xl p-5 space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gold/15 pb-3">
+                              <div>
+                                <span className="font-mono text-gold text-sm font-bold block">{order.orderId}</span>
+                                <span className="text-[11px] text-cream/50">
+                                  Placed on {new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </span>
+                              </div>
+                              <span className="px-3 py-1 rounded-full text-xs font-body font-medium bg-gold/15 text-gold border border-gold/30">
+                                {order.status || 'Fitting Scheduled'}
+                              </span>
+                            </div>
+
+                            {/* Items list */}
+                            <div className="space-y-2">
+                              {order.items?.map((item, itemIdx) => (
+                                <div key={itemIdx} className="flex items-center gap-3 text-xs">
+                                  {item.image && (
+                                    <div className="w-10 h-12 rounded overflow-hidden border border-gold/20 shrink-0 bg-night">
+                                      <img src={item.image} alt={item.product} className="w-full h-full object-cover" />
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <span className="font-serif text-cream font-medium truncate block">
+                                      {item.product || item.type || 'Custom Royal Garment'}
+                                    </span>
+                                    <span className="text-cream/50 text-[11px]">
+                                      {item.type === 'rent' ? `Rental (${item.rentalDays || 3} Days)` : 'Purchase'} • Size: {item.size || 'Custom'}
+                                    </span>
+                                  </div>
+                                  <span className="text-gold font-serif font-bold">
+                                    ₹{Number(item.price || order.total)?.toLocaleString('en-IN')}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="flex items-center justify-between pt-2 border-t border-gold/10 text-xs">
+                              <span className="text-cream/60">
+                                {order.deliveryType === 'showroom' ? 'Pickup & Trial at Surajpole, Udaipur' : 'Doorstep Insured Delivery'}
+                              </span>
+                              <div className="text-right">
+                                <span className="text-cream/40 text-[11px] block">Grand Total</span>
+                                <span className="font-serif text-gold text-base font-bold">
+                                  ₹{Number(order.total)?.toLocaleString('en-IN')}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <p className="text-cream/70 font-body text-sm">
-                            {order.items?.length || 0} items • ₹{order.total}
-                          </p>
-                          <p className="text-cream/50 font-body text-xs mt-1">
-                            {new Date(order.createdAt).toLocaleDateString()}
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 space-y-4">
+                        <Package size={48} className="text-gold/40 mx-auto" />
+                        <div>
+                          <p className="text-cream font-serif text-lg">No Royal Orders Yet</p>
+                          <p className="text-cream/50 text-xs max-w-sm mx-auto mt-1">
+                            Browse our wedding sherwanis and bridal poshaks for rent or purchase.
                           </p>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <Package size={48} className="text-gold/30 mx-auto mb-4" />
-                      <p className="text-cream/50 font-body">No orders yet</p>
-                      <Link
-                        to="/custom-order"
-                        className="inline-block mt-4 text-gold hover:text-gold/80 font-body text-sm"
-                      >
-                        Place your first order →
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              )}
+                        <div className="flex justify-center gap-3 pt-2">
+                          <Link
+                            to="/shop"
+                            className="px-6 py-2 bg-gold hover:bg-copper text-night text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow"
+                          >
+                            Explore Wardrobe
+                          </Link>
+                          <Link
+                            to="/custom-order"
+                            className="px-6 py-2 border border-gold/30 text-gold hover:bg-gold/10 text-xs font-bold uppercase tracking-wider rounded-xl transition-all"
+                          >
+                            Custom Order
+                          </Link>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

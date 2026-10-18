@@ -12,7 +12,8 @@ import {
   LogOut,
   Menu,
   X,
-  Crown
+  Crown,
+  Tags
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 
@@ -30,6 +31,7 @@ const AdminLayout = () => {
   const menuItems = [
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
     { path: '/admin/collections', icon: ShoppingBag, label: 'Collections' },
+    { path: '/admin/categories', icon: Tags, label: 'Categories' },
     { path: '/admin/testimonials', icon: MessageSquare, label: 'Testimonials' },
     { path: '/admin/gallery', icon: Image, label: 'Gallery' },
     { path: '/admin/services', icon: Briefcase, label: 'Services' },
