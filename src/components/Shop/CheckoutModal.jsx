@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useUser } from '../../context/UserContext';
+import { ordersAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const CheckoutModal = () => {
@@ -46,61 +47,45 @@ const CheckoutModal = () => {
 
   const handleFinalOrder = async () => {
     setIsSubmitting(true);
-    const orderNumber = `RNJ-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
     try {
-      // If user is logged in, record the order
-      if (isAuthenticated && createOrder) {
-        try {
-          await createOrder({
-            items: cart.map((c) => ({
-              product: c.product.name,
-              type: c.orderType,
-              size: c.selectedSize,
-              price: c.unitPrice,
-              quantity: c.quantity
-            })),
-            total,
-            notes: `Delivery: ${formData.deliveryType} | Method: ${formData.paymentMethod} | Notes: ${formData.fittingNotes}`
-          });
-        } catch (err) {
-          console.warn('Could not persist order to backend account, saving locally', err);
-        }
-      }
-
-      // Store in local storage for order history & tracking
-      const newOrder = {
-        orderId: orderNumber,
+      const orderPayload = {
+        customerName: formData.name,
+        customerPhone: formData.phone,
+        customerEmail: formData.email,
+        deliveryType: formData.deliveryType,
+        shippingAddress: {
+          street: formData.street,
+          city: formData.city,
+          pincode: formData.pincode
+        },
+        paymentMethod: formData.paymentMethod,
+        subtotal,
+        securityDeposit,
+        total,
+        fittingNotes: formData.fittingNotes,
+        notes: `Delivery: ${formData.deliveryType} | Method: ${formData.paymentMethod} | Notes: ${formData.fittingNotes}`,
         items: cart.map((c) => ({
-          product: c.product.name,
+          productId: c.product.id || c.product._id,
+          productName: c.product.name,
           image: c.product.image,
-          type: c.orderType,
+          orderType: c.orderType,
           size: c.selectedSize,
-          price: c.unitPrice,
+          unitPrice: c.unitPrice,
           quantity: c.quantity,
           rentalDays: c.rentalDays,
           rentalStartDate: c.rentalStartDate
-        })),
-        total,
-        securityDeposit,
-        status: formData.deliveryType === 'showroom' ? 'Fitting Scheduled at Udaipur Showroom' : 'Order Placed (Processing)',
-        createdAt: new Date().toISOString(),
-        deliveryType: formData.deliveryType,
-        customerName: formData.name,
-        customerPhone: formData.phone
+        }))
       };
 
-      try {
-        const existing = JSON.parse(localStorage.getItem('ranaji_user_orders') || '[]');
-        localStorage.setItem('ranaji_user_orders', JSON.stringify([newOrder, ...existing]));
-      } catch (e) {
-        console.error('Failed to store local order', e);
-      }
+      const res = await ordersAPI.create(orderPayload);
+      const createdOrder = res.order || res.data || res;
+      const orderNumber = createdOrder.orderNumber || createdOrder.orderId;
 
       setConfirmedOrderId(orderNumber);
       setStep(3);
       clearCart();
-      toast.success('Royal Order Confirmed!', {
+      toast.success('Royal Order Confirmed & Saved to Database!', {
         icon: '👑',
         style: {
           background: '#1C1208',
@@ -400,7 +385,7 @@ const CheckoutModal = () => {
                   </div>
                 </div>
 
-                {/* Option 3: UPI / Digital Mock */}
+                {/* Option 3: UPI / Digital Payment */}
                 <div
                   onClick={() => setFormData((p) => ({ ...p, paymentMethod: 'upi' }))}
                   className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${

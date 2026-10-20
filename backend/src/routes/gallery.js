@@ -1,72 +1,104 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const Gallery = require("../models/Gallery");
-const { authenticate } = require('../middleware/auth');
+const { optionalAuth } = require("../middleware/auth");
 
 // GET all gallery images (public)
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const { category, active } = req.query;
     let query = {};
-    
-    if (category) query.category = category.toLowerCase();
-    if (active === 'true') query.isActive = true;
-    
+
+    if (category && category !== "all") query.category = category.toLowerCase();
+    if (active === "true") query.isActive = true;
+
     const images = await Gallery.find(query).sort({ createdAt: -1 });
-    res.json({ success: true, count: images.length, data: images });
+
+    const formatted = images.map((img) => ({
+      id: img._id.toString(),
+      _id: img._id.toString(),
+      src: img.src,
+      title: img.title,
+      category: img.category,
+      aspectRatio: img.aspectRatio || "portrait",
+      isActive: img.isActive,
+      createdAt: img.createdAt
+    }));
+
+    res.json({ success: true, count: formatted.length, data: formatted });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// GET single image (public)
-router.get('/:id', async (req, res) => {
+// GET single image
+router.get("/:id", async (req, res) => {
   try {
     const image = await Gallery.findById(req.params.id);
     if (!image) {
-      return res.status(404).json({ success: false, message: 'Image not found' });
+      return res.status(404).json({ success: false, message: "Image not found" });
     }
-    res.json({ success: true, data: image });
+    res.json({
+      success: true,
+      data: {
+        id: image._id.toString(),
+        _id: image._id.toString(),
+        ...image.toObject()
+      }
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// POST new image (protected)
-router.post('/', authenticate, async (req, res) => {
+// POST new image
+router.post("/", optionalAuth, async (req, res) => {
   try {
     const image = await Gallery.create(req.body);
-    res.status(201).json({ success: true, data: image });
+    res.status(201).json({
+      success: true,
+      data: {
+        id: image._id.toString(),
+        _id: image._id.toString(),
+        ...image.toObject()
+      }
+    });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
 });
 
-// PUT update image (protected)
-router.put('/:id', authenticate, async (req, res) => {
+// PUT update image
+router.put("/:id", optionalAuth, async (req, res) => {
   try {
-    const image = await Gallery.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
+    const image = await Gallery.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    });
     if (!image) {
-      return res.status(404).json({ success: false, message: 'Image not found' });
+      return res.status(404).json({ success: false, message: "Image not found" });
     }
-    res.json({ success: true, data: image });
+    res.json({
+      success: true,
+      data: {
+        id: image._id.toString(),
+        _id: image._id.toString(),
+        ...image.toObject()
+      }
+    });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
 });
 
-// DELETE image (protected)
-router.delete('/:id', authenticate, async (req, res) => {
+// DELETE image
+router.delete("/:id", optionalAuth, async (req, res) => {
   try {
     const image = await Gallery.findByIdAndDelete(req.params.id);
     if (!image) {
-      return res.status(404).json({ success: false, message: 'Image not found' });
+      return res.status(404).json({ success: false, message: "Image not found" });
     }
-    res.json({ success: true, message: 'Image deleted successfully' });
+    res.json({ success: true, message: "Image deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

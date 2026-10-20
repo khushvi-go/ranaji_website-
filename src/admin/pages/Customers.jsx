@@ -11,17 +11,22 @@ import {
   ShoppingBag, 
   ChevronRight, 
   X,
-  FileText
+  FileText,
+  Download
 } from 'lucide-react';
 import { useBusiness } from '../../context/BusinessContext';
+import { useAdmin } from '../../context/AdminContext';
+import { customersAPI } from '../../services/api';
 import { formatINR } from '../../utils/billingCalculator';
 import toast from 'react-hot-toast';
 
 const Customers = () => {
   const { customers, sales, addCustomer, updateCustomer } = useBusiness();
+  const { permissions } = useAdmin();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // New Customer Form
   const [customerForm, setCustomerForm] = useState({
@@ -56,14 +61,14 @@ const Customers = () => {
   }, [customers, searchQuery]);
 
   // Handle Save
-  const handleCreateCustomer = (e) => {
+  const handleCreateCustomer = async (e) => {
     e.preventDefault();
     if (!customerForm.name.trim() || !customerForm.phone.trim()) {
       toast.error('Customer name and phone are required');
       return;
     }
 
-    const res = addCustomer(customerForm);
+    const res = await addCustomer(customerForm);
     if (res.success) {
       toast.success('Customer registered');
       setIsAddModalOpen(false);
@@ -87,6 +92,27 @@ const Customers = () => {
     );
   }, [sales, selectedCustomer]);
 
+  const handleExportCustomers = async () => {
+    try {
+      setIsExporting(true);
+      const res = await customersAPI.export();
+      if (res.success && res.data) {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(res.data, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `ranaji_patrons_export_${Date.now()}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        toast.success(`Exported ${res.count} patron records. Logged in audit trail.`);
+      }
+    } catch (err) {
+      toast.error(err.message || 'Export failed: Access Denied');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -98,13 +124,27 @@ const Customers = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gold to-copper text-night font-bold text-xs uppercase tracking-wider rounded-xl hover:brightness-110 shadow-lg font-body"
-        >
-          <UserPlus size={16} />
-          <span>Add New Customer</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {permissions?.canExportCustomers && (
+            <button
+              onClick={handleExportCustomers}
+              disabled={isExporting}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gold/10 text-gold border border-gold/30 hover:bg-gold/20 text-xs font-body transition-colors disabled:opacity-50"
+              title="Export Customer Directory (Owner & Manager Only)"
+            >
+              <Download size={14} />
+              <span>{isExporting ? 'Exporting...' : 'Export Directory'}</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gold to-copper text-night font-bold text-xs uppercase tracking-wider rounded-xl hover:brightness-110 shadow-lg font-body"
+          >
+            <UserPlus size={16} />
+            <span>Add New Customer</span>
+          </button>
+        </div>
       </div>
 
       {/* Search Bar */}

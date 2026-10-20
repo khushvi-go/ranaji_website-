@@ -255,7 +255,7 @@ const Categories = () => {
 
   const handleSave = (catData) => {
     if (editingCategory) {
-      updateCategory(editingCategory.id, catData);
+      updateCategory(editingCategory._id || editingCategory.id, catData);
       toast.success('Category updated successfully!', { icon: '👑' });
     } else {
       addCategory(catData);
@@ -415,7 +415,7 @@ const Categories = () => {
                       <Edit2 size={15} />
                     </button>
                     <button
-                      onClick={() => setDeleteConfirmId(cat.id)}
+                      onClick={() => setDeleteConfirmId(cat._id || cat.id)}
                       className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors"
                       title="Delete Category"
                     >

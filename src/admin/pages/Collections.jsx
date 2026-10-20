@@ -409,7 +409,7 @@ const Collections = () => {
 
   const handleSave = (itemData) => {
     if (editingCollection) {
-      updateProduct(editingCollection.id, itemData);
+      updateProduct(editingCollection._id || editingCollection.id, itemData);
       toast.success('Product updated successfully!', { icon: '👑' });
     } else {
       addProduct(itemData);
@@ -599,7 +599,7 @@ const Collections = () => {
                           <Edit2 size={14} />
                         </button>
                         <button
-                          onClick={() => setDeleteConfirmId(p.id)}
+                          onClick={() => setDeleteConfirmId(p._id || p.id)}
                           className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors"
                           title="Delete Product"
                         >

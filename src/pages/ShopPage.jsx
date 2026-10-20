@@ -57,8 +57,14 @@ const ShopPage = () => {
   const filteredProducts = useMemo(() => {
     return products.filter((item) => {
       // Category filter
-      if (selectedCategory !== 'all' && item.category !== selectedCategory) {
-        return false;
+      if (selectedCategory !== 'all') {
+        const matchesCategory =
+          item.category === selectedCategory ||
+          item.categorySlug === selectedCategory ||
+          String(item.category) === String(selectedCategory);
+        if (!matchesCategory) {
+          return false;
+        }
       }
 
       // Subcategory filter
@@ -312,13 +318,16 @@ const ShopPage = () => {
                   </button>
 
                   {categories.map((cat) => {
-                    const count = products.filter((p) => p.category === cat.id).length;
+                    const catKey = cat.slug || cat.id;
+                    const count = products.filter(
+                      (p) => p.category === catKey || p.categorySlug === cat.slug || String(p.category) === String(cat.id)
+                    ).length;
                     return (
                       <button
-                        key={cat.id}
-                        onClick={() => handleCategoryChange(cat.id)}
+                        key={cat.id || cat._id}
+                        onClick={() => handleCategoryChange(catKey)}
                         className={`w-full text-left px-3 py-2 rounded-lg text-xs font-body transition-all flex items-center justify-between ${
-                          selectedCategory === cat.id
+                          selectedCategory === catKey
                             ? 'bg-gold text-night font-bold shadow'
                             : 'text-cream/70 hover:bg-gold/10 hover:text-gold'
                         }`}
@@ -492,17 +501,20 @@ const ShopPage = () => {
                   >
                     All Collections
                   </button>
-                  {categories.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => handleCategoryChange(c.id)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-xs font-body ${
-                        selectedCategory === c.id ? 'bg-gold text-night font-bold' : 'text-cream/70'
-                      }`}
-                    >
-                      {c.name}
-                    </button>
-                  ))}
+                  {categories.map((c) => {
+                    const catKey = c.slug || c.id;
+                    return (
+                      <button
+                        key={c.id || c._id}
+                        onClick={() => handleCategoryChange(catKey)}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-body ${
+                          selectedCategory === catKey ? 'bg-gold text-night font-bold' : 'text-cream/70'
+                        }`}
+                      >
+                        {c.name}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

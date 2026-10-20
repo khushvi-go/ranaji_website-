@@ -73,7 +73,7 @@ const Inventory = () => {
     setIsAdjustModalOpen(true);
   };
 
-  const handleConfirmAdjust = (e) => {
+  const handleConfirmAdjust = async (e) => {
     e.preventDefault();
     if (!selectedProductForAdjust || adjustDelta === '') return;
 
@@ -83,8 +83,9 @@ const Inventory = () => {
       return;
     }
 
-    const res = adjustStock(
-      selectedProductForAdjust.id,
+    const prodId = selectedProductForAdjust._id || selectedProductForAdjust.id;
+    const res = await adjustStock(
+      prodId,
       deltaNum,
       adjustReason,
       'Admin (Inventory Desk)'

@@ -4,9 +4,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { 
   User, MapPin, Ruler, ShoppingBag, MessageSquare, 
   LogOut, Edit2, Save, Crown, ChevronRight, Package,
-  Heart, Camera, Phone, Mail, Calendar, Home
+  Heart, Camera, Phone, Mail, Calendar, Home,
+  Star, CheckCircle, Clock, XCircle, Quote
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
+import { ordersAPI, testimonialsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const UserProfile = () => {
@@ -15,6 +17,10 @@ const UserProfile = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [dbOrders, setDbOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [userTestimonials, setUserTestimonials] = useState([]);
+  const [loadingTestimonials, setLoadingTestimonials] = useState(false);
   
   // Form states
   const [profileData, setProfileData] = useState({
@@ -51,6 +57,64 @@ const UserProfile = () => {
       });
     }
   }, [user]);
+
+  useEffect(() => {
+    const fetchUserOrders = async () => {
+      if (!user) return;
+      setLoadingOrders(true);
+      try {
+        const queryParams = new URLSearchParams();
+        if (user._id || user.id) queryParams.append('user', user._id || user.id);
+        if (user.email) queryParams.append('email', user.email);
+        if (user.phone) queryParams.append('phone', user.phone);
+        const res = await ordersAPI.getAll(`?${queryParams.toString()}`);
+        if (res && res.data && res.data.length > 0) {
+          setDbOrders(res.data);
+        } else if (Array.isArray(user.orders) && user.orders.length > 0) {
+          setDbOrders(user.orders);
+        } else {
+          setDbOrders([]);
+        }
+      } catch (err) {
+        console.error('Failed to load user orders:', err);
+        if (Array.isArray(user.orders)) {
+          setDbOrders(user.orders);
+        }
+      } finally {
+        setLoadingOrders(false);
+      }
+    };
+
+    if (activeTab === 'orders' || user) {
+      fetchUserOrders();
+    }
+  }, [user, activeTab]);
+
+  useEffect(() => {
+    const fetchUserTestimonials = async () => {
+      if (!user) return;
+      setLoadingTestimonials(true);
+      try {
+        const userId = user._id || user.id;
+        const res = await testimonialsAPI.getAll(`?user=${userId}`);
+        if (res && res.data) {
+          setUserTestimonials(res.data);
+        } else if (Array.isArray(res)) {
+          setUserTestimonials(res);
+        } else {
+          setUserTestimonials([]);
+        }
+      } catch (err) {
+        console.error('Failed to load user testimonials:', err);
+      } finally {
+        setLoadingTestimonials(false);
+      }
+    };
+
+    if (activeTab === 'testimonials' || user) {
+      fetchUserTestimonials();
+    }
+  }, [user, activeTab]);
 
   const handleLogout = () => {
     logout();
@@ -113,6 +177,7 @@ const UserProfile = () => {
     { id: 'address', label: 'Address', icon: MapPin },
     { id: 'measurements', label: 'Measurements', icon: Ruler },
     { id: 'orders', label: 'My Orders', icon: ShoppingBag },
+    { id: 'testimonials', label: 'My Testimonials', icon: MessageSquare },
   ];
 
   return (
@@ -183,7 +248,7 @@ const UserProfile = () => {
                   Custom Order
                 </Link>
                 <Link
-                  to="/testimonials"
+                  to="/testimonials/write"
                   className="flex items-center gap-3 text-cream/70 hover:text-gold font-body text-sm transition-colors"
                 >
                   <MessageSquare size={16} />
@@ -208,7 +273,7 @@ const UserProfile = () => {
                 <h2 className="font-display text-xl text-cream">
                   {tabs.find(t => t.id === activeTab)?.label}
                 </h2>
-                {activeTab !== 'orders' && (
+                {activeTab !== 'orders' && activeTab !== 'testimonials' && (
                   <button
                     onClick={() => isEditing ? handleSave() : setIsEditing(true)}
                     disabled={saving}
@@ -226,6 +291,15 @@ const UserProfile = () => {
                       <><Edit2 size={16} /> Edit</>
                     )}
                   </button>
+                )}
+                {activeTab === 'testimonials' && (
+                  <Link
+                    to="/testimonials/write"
+                    className="flex items-center gap-2 px-4 py-2 bg-gold text-night rounded-lg font-body text-xs font-semibold hover:bg-gold/90 transition-colors shadow-sm"
+                  >
+                    <MessageSquare size={14} />
+                    Write New Review
+                  </Link>
                 )}
               </div>
 
@@ -547,100 +621,186 @@ const UserProfile = () => {
               )}
 
               {/* Orders Tab */}
-              {activeTab === 'orders' && (() => {
-                const localOrders = (() => {
-                  try {
-                    return JSON.parse(localStorage.getItem('ranaji_user_orders') || '[]');
-                  } catch (e) {
-                    return [];
-                  }
-                })();
-                const allOrders = [...(user.orders || []), ...localOrders];
-
-                return (
-                  <div className="space-y-6">
-                    {allOrders.length > 0 ? (
-                      <div className="space-y-4">
-                        {allOrders.map((order, idx) => (
-                          <div key={order.orderId || idx} className="bg-cream/5 border border-gold/20 rounded-xl p-5 space-y-3">
-                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gold/15 pb-3">
-                              <div>
-                                <span className="font-mono text-gold text-sm font-bold block">{order.orderId}</span>
-                                <span className="text-[11px] text-cream/50">
-                                  Placed on {new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                </span>
-                              </div>
-                              <span className="px-3 py-1 rounded-full text-xs font-body font-medium bg-gold/15 text-gold border border-gold/30">
-                                {order.status || 'Fitting Scheduled'}
+              {activeTab === 'orders' && (
+                <div className="space-y-6">
+                  {loadingOrders ? (
+                    <div className="text-center py-12 space-y-3">
+                      <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto" />
+                      <p className="text-cream/60 font-body text-sm">Loading your royal orders...</p>
+                    </div>
+                  ) : dbOrders.length > 0 ? (
+                    <div className="space-y-4">
+                      {dbOrders.map((order, idx) => (
+                        <div key={order.id || order._id || order.orderNumber || order.orderId || idx} className="bg-cream/5 border border-gold/20 rounded-xl p-5 space-y-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gold/15 pb-3">
+                            <div>
+                              <span className="font-mono text-gold text-sm font-bold block">{order.orderNumber || order.orderId}</span>
+                              <span className="text-[11px] text-cream/50">
+                                Placed on {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent'}
                               </span>
                             </div>
+                            <span className="px-3 py-1 rounded-full text-xs font-body font-medium bg-gold/15 text-gold border border-gold/30">
+                              {order.orderStatus || order.status || 'Fitting Scheduled'}
+                            </span>
+                          </div>
 
-                            {/* Items list */}
-                            <div className="space-y-2">
-                              {order.items?.map((item, itemIdx) => (
-                                <div key={itemIdx} className="flex items-center gap-3 text-xs">
-                                  {item.image && (
-                                    <div className="w-10 h-12 rounded overflow-hidden border border-gold/20 shrink-0 bg-night">
-                                      <img src={item.image} alt={item.product} className="w-full h-full object-cover" />
-                                    </div>
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <span className="font-serif text-cream font-medium truncate block">
-                                      {item.product || item.type || 'Custom Royal Garment'}
-                                    </span>
-                                    <span className="text-cream/50 text-[11px]">
-                                      {item.type === 'rent' ? `Rental (${item.rentalDays || 3} Days)` : 'Purchase'} • Size: {item.size || 'Custom'}
-                                    </span>
+                          {/* Items list */}
+                          <div className="space-y-2">
+                            {(order.items || []).map((item, itemIdx) => (
+                              <div key={itemIdx} className="flex items-center gap-3 text-xs">
+                                {item.image && (
+                                  <div className="w-10 h-12 rounded overflow-hidden border border-gold/20 shrink-0 bg-night">
+                                    <img src={item.image} alt={item.productName || item.product} className="w-full h-full object-cover" />
                                   </div>
-                                  <span className="text-gold font-serif font-bold">
-                                    ₹{Number(item.price || order.total)?.toLocaleString('en-IN')}
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <span className="font-serif text-cream font-medium truncate block">
+                                    {item.productName || item.product || item.type || 'Custom Royal Garment'}
+                                  </span>
+                                  <span className="text-cream/50 text-[11px]">
+                                    {(item.orderType === 'rent' || item.type === 'rent') ? `Rental (${item.rentalDays || 3} Days)` : 'Purchase'} • Size: {item.size || 'Custom'}
                                   </span>
                                 </div>
-                              ))}
-                            </div>
-
-                            <div className="flex items-center justify-between pt-2 border-t border-gold/10 text-xs">
-                              <span className="text-cream/60">
-                                {order.deliveryType === 'showroom' ? 'Pickup & Trial at Surajpole, Udaipur' : 'Doorstep Insured Delivery'}
-                              </span>
-                              <div className="text-right">
-                                <span className="text-cream/40 text-[11px] block">Grand Total</span>
-                                <span className="font-serif text-gold text-base font-bold">
-                                  ₹{Number(order.total)?.toLocaleString('en-IN')}
+                                <span className="text-gold font-serif font-bold">
+                                  ₹{Number(item.unitPrice || item.price || order.total)?.toLocaleString('en-IN')}
                                 </span>
                               </div>
+                            ))}
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2 border-t border-gold/10 text-xs">
+                            <span className="text-cream/60">
+                              {order.deliveryType === 'showroom' ? 'Pickup & Trial at Surajpole, Udaipur' : 'Doorstep Insured Delivery'}
+                            </span>
+                            <div className="text-right">
+                              <span className="text-cream/40 text-[11px] block">Grand Total</span>
+                              <span className="font-serif text-gold text-base font-bold">
+                                ₹{Number(order.total)?.toLocaleString('en-IN')}
+                              </span>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-12 space-y-4">
-                        <Package size={48} className="text-gold/40 mx-auto" />
-                        <div>
-                          <p className="text-cream font-serif text-lg">No Royal Orders Yet</p>
-                          <p className="text-cream/50 text-xs max-w-sm mx-auto mt-1">
-                            Browse our wedding sherwanis and bridal poshaks for rent or purchase.
-                          </p>
                         </div>
-                        <div className="flex justify-center gap-3 pt-2">
-                          <Link
-                            to="/shop"
-                            className="px-6 py-2 bg-gold hover:bg-copper text-night text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow"
-                          >
-                            Explore Wardrobe
-                          </Link>
-                          <Link
-                            to="/custom-order"
-                            className="px-6 py-2 border border-gold/30 text-gold hover:bg-gold/10 text-xs font-bold uppercase tracking-wider rounded-xl transition-all"
-                          >
-                            Custom Order
-                          </Link>
-                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 space-y-4">
+                      <Package size={48} className="text-gold/40 mx-auto" />
+                      <div>
+                        <p className="text-cream font-serif text-lg">No Royal Orders Yet</p>
+                        <p className="text-cream/50 text-xs max-w-sm mx-auto mt-1">
+                          Browse our wedding sherwanis and bridal poshaks for rent or purchase.
+                        </p>
                       </div>
-                    )}
-                  </div>
-                );
-              })()}
+                      <Link
+                        to="/shop"
+                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-gold text-night font-body text-xs font-semibold hover:bg-gold/90 transition-colors"
+                      >
+                        Explore Royal Collection
+                        <ChevronRight size={14} />
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Testimonials Tab */}
+              {activeTab === 'testimonials' && (
+                <div>
+                  {loadingTestimonials ? (
+                    <div className="flex items-center justify-center py-16">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full"
+                      />
+                    </div>
+                  ) : userTestimonials && userTestimonials.length > 0 ? (
+                    <div className="space-y-4">
+                      {userTestimonials.map((item, idx) => {
+                        const status = item.status || (item.isActive ? 'approved' : 'pending');
+                        return (
+                          <div
+                            key={item.id || item._id || idx}
+                            className="bg-cream/5 border border-gold/20 rounded-xl p-5 space-y-4"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gold/10 pb-3">
+                              <div className="flex items-center gap-2">
+                                <div className="flex">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star
+                                      key={star}
+                                      size={16}
+                                      className={`${
+                                        star <= (item.rating || 5)
+                                          ? 'text-gold fill-gold'
+                                          : 'text-cream/20'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-cream/60 font-body text-xs ml-1">
+                                  {item.occasion || 'Wedding Ensemble'}
+                                </span>
+                              </div>
+
+                              <div>
+                                {status === 'approved' ? (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-body font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                    <CheckCircle size={12} /> Approved & Live
+                                  </span>
+                                ) : status === 'rejected' ? (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-body font-medium bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                                    <XCircle size={12} /> Declined
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-body font-medium bg-gold/15 text-gold border border-gold/30">
+                                    <Clock size={12} /> Under Review by Royal Admin
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <blockquote className="font-serif text-cream/90 text-sm italic leading-relaxed">
+                              &ldquo;{item.text || item.content}&rdquo;
+                            </blockquote>
+
+                            <div className="flex items-center justify-between text-xs text-cream/50 pt-1">
+                              <span>Location: {item.location || 'Udaipur, Rajasthan'}</span>
+                              <span>
+                                {item.createdAt
+                                  ? new Date(item.createdAt).toLocaleDateString('en-IN', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric'
+                                    })
+                                  : 'Recently submitted'}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 space-y-4">
+                      <Quote size={44} className="text-gold/40 mx-auto" />
+                      <div>
+                        <p className="text-cream font-serif text-lg">No Royal Reviews Yet</p>
+                        <p className="text-cream/50 text-xs max-w-sm mx-auto mt-1">
+                          Share your experience with Ranaji craftsmanship and help other patrons discover our royal attire.
+                        </p>
+                      </div>
+                      <Link
+                        to="/testimonials/write"
+                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-gold text-night font-body text-xs font-semibold hover:bg-gold/90 transition-colors"
+                      >
+                        <MessageSquare size={14} />
+                        Share Your Experience
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
+
             </div>
           </div>
         </div>

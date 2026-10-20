@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Star, Send, Quote } from 'lucide-react';
+import { ArrowLeft, Star, Send, Quote, Sparkles } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { testimonialsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -12,9 +12,11 @@ const UserTestimonial = () => {
   const [submitting, setSubmitting] = useState(false);
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
+  const [guestName, setGuestName] = useState('');
+  const [guestLocation, setGuestLocation] = useState('Udaipur, Rajasthan');
   const [formData, setFormData] = useState({
     content: '',
-    serviceType: ''
+    serviceType: 'Wedding Attire'
   });
 
   const serviceTypes = [
@@ -29,30 +31,47 @@ const UserTestimonial = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    const submitName = (isAuthenticated && user?.name) ? user.name : guestName.trim();
+
+    if (!submitName || submitName.length < 2) {
+      toast.error('Please provide your name (at least 2 characters)');
+      return;
+    }
+
     if (!formData.content.trim()) {
       toast.error('Please write your testimonial');
       return;
     }
 
-    if (formData.content.length < 20) {
-      toast.error('Testimonial should be at least 20 characters');
+    if (formData.content.length < 10) {
+      toast.error('Testimonial should be at least 10 characters');
       return;
     }
 
     setSubmitting(true);
     try {
       const result = await testimonialsAPI.create({
-        name: user.name,
-        content: formData.content,
+        name: submitName,
+        text: formData.content.trim(),
+        content: formData.content.trim(),
         rating: rating,
-        serviceType: formData.serviceType,
-        userId: user._id,
-        active: false // Needs admin approval
+        occasion: formData.serviceType,
+        location: guestLocation.trim() || 'Udaipur, Rajasthan',
+        userId: user?._id,
+        status: 'pending',
+        isActive: false
       });
 
-      if (result.success) {
-        toast.success('Thank you! Your testimonial has been submitted for review.');
-        navigate('/profile');
+      if (result.success || result.data || result.id || result._id) {
+        toast.success('Thank you! Your testimonial has been submitted for royal admin approval.', {
+          icon: '👑',
+          duration: 5000
+        });
+        if (isAuthenticated) {
+          navigate('/profile');
+        } else {
+          navigate('/');
+        }
       } else {
         toast.error(result.message || 'Failed to submit testimonial');
       }
@@ -63,22 +82,6 @@ const UserTestimonial = () => {
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-night flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-cream/50 font-body mb-4">Please login to submit a testimonial</p>
-          <Link
-            to="/login"
-            className="px-6 py-3 bg-gold text-night font-body rounded-lg hover:bg-gold/90 transition-colors"
-          >
-            Login
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-night">
       {/* Header */}
@@ -86,11 +89,11 @@ const UserTestimonial = () => {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <Link
-              to="/profile"
+              to={isAuthenticated ? '/profile' : '/'}
               className="flex items-center gap-2 text-cream/70 hover:text-gold font-body transition-colors"
             >
               <ArrowLeft size={18} />
-              Back to Profile
+              {isAuthenticated ? 'Back to Profile' : 'Back to Home'}
             </Link>
             <div className="flex items-center gap-2">
               <span className="text-gold font-display text-lg">RANAJI</span>
@@ -114,17 +117,50 @@ const UserTestimonial = () => {
             </div>
             <h1 className="font-display text-2xl text-cream mb-2">Write a Testimonial</h1>
             <p className="text-cream/50 font-body">
-              Share your experience with Ranaji and help others discover our craftsmanship
+              Share your experience with Ranaji and help others discover our royal craftsmanship
+            </p>
+          </div>
+
+          <div className="mb-6 p-4 bg-gold/10 border border-gold/20 rounded-xl flex items-start gap-3">
+            <Sparkles size={18} className="text-gold shrink-0 mt-0.5" />
+            <p className="text-cream/70 text-xs font-body leading-relaxed">
+              New testimonials default to pending verification and will appear on the public website after admin review.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* User Info Display */}
-            <div className="bg-cream/5 border border-gold/10 rounded-lg p-4">
-              <p className="text-cream/50 font-body text-sm mb-1">Submitting as</p>
-              <p className="text-cream font-body font-semibold">{user.name}</p>
-              <p className="text-cream/50 font-body text-sm">{user.email}</p>
-            </div>
+            {/* User Info Display / Guest Input */}
+            {isAuthenticated && user ? (
+              <div className="bg-cream/5 border border-gold/10 rounded-lg p-4">
+                <p className="text-cream/50 font-body text-sm mb-1">Submitting as</p>
+                <p className="text-cream font-body font-semibold">{user.name}</p>
+                <p className="text-cream/50 font-body text-sm">{user.email}</p>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-cream font-body mb-2 text-sm">Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    placeholder="Your Name"
+                    className="w-full bg-cream/5 border border-gold/20 rounded-lg px-4 py-3 text-cream font-body focus:outline-none focus:border-gold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-cream font-body mb-2 text-sm">Location / City</label>
+                  <input
+                    type="text"
+                    value={guestLocation}
+                    onChange={(e) => setGuestLocation(e.target.value)}
+                    placeholder="e.g., Udaipur, Rajasthan"
+                    className="w-full bg-cream/5 border border-gold/20 rounded-lg px-4 py-3 text-cream font-body focus:outline-none focus:border-gold"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Rating */}
             <div>
@@ -160,7 +196,7 @@ const UserTestimonial = () => {
 
             {/* Service Type */}
             <div>
-              <label className="block text-cream font-body mb-3">What service did you use?</label>
+              <label className="block text-cream font-body mb-3">What service did you experience?</label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {serviceTypes.map((type) => (
                   <button
@@ -185,13 +221,13 @@ const UserTestimonial = () => {
               <textarea
                 value={formData.content}
                 onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                rows={6}
-                placeholder="Tell us about your experience with Ranaji. What did you like? How was the quality? Would you recommend us?"
+                rows={5}
+                placeholder="Tell us about your experience with Ranaji. What did you like? How was the fit and craftsmanship?"
                 className="w-full bg-cream/5 border border-gold/20 rounded-lg px-4 py-3 text-cream font-body focus:outline-none focus:border-gold resize-none"
                 required
               />
               <p className="text-cream/40 font-body text-xs mt-2">
-                Minimum 20 characters • {formData.content.length} characters written
+                Minimum 10 characters • {formData.content.length} characters written
               </p>
             </div>
 
@@ -216,7 +252,7 @@ const UserTestimonial = () => {
             </button>
 
             <p className="text-cream/40 font-body text-xs text-center">
-              Your testimonial will be reviewed by our team before being published.
+              Your testimonial will be reviewed by our team before being published publicly.
             </p>
           </form>
         </motion.div>

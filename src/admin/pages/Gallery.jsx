@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Edit2, Trash2, X, Save, Image, Grid, LayoutList } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
-import { galleryCategories } from '../../data/gallery';
+const galleryCategories = [
+  { id: 'all', label: 'All' },
+  { id: 'groom', label: 'Groom' },
+  { id: 'bride', label: 'Bride' },
+  { id: 'group', label: 'Group' },
+  { id: 'accessories', label: 'Accessories' }
+];
 
 const GalleryModal = ({ isOpen, onClose, image, onSave }) => {
   const [formData, setFormData] = useState({
@@ -163,7 +169,7 @@ const Gallery = () => {
 
   const handleSave = (data) => {
     if (editingImage) {
-      updateGalleryImage(editingImage.id, data);
+      updateGalleryImage(editingImage._id || editingImage.id, data);
     } else {
       addGalleryImage(data);
     }
@@ -387,7 +393,7 @@ const Gallery = () => {
                 Cancel
               </button>
               <button
-                onClick={() => handleDelete(deleteConfirm.id)}
+                onClick={() => handleDelete(deleteConfirm._id || deleteConfirm.id)}
                 className="flex-1 px-6 py-3 bg-crimson text-cream rounded-lg hover:bg-crimson/80 transition-colors font-body font-medium"
               >
                 Delete

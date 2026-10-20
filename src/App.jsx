@@ -42,6 +42,9 @@ import Gallery from './admin/pages/Gallery';
 import Services from './admin/pages/Services';
 import Bookings from './admin/pages/Bookings';
 import Contacts from './admin/pages/Contacts';
+import Staff from './admin/pages/Staff';
+import Approvals from './admin/pages/Approvals';
+import AuditLogs from './admin/pages/AuditLogs';
 
 // User imports
 import { UserProvider } from './context/UserContext';
@@ -123,6 +126,7 @@ function App() {
                   <Route path="/auth/success" element={<AuthSuccess />} />
                   <Route path="/profile" element={<UserProfile />} />
                   <Route path="/custom-order" element={<CustomOrder />} />
+                  <Route path="/testimonials" element={<UserTestimonial />} />
                   <Route path="/testimonials/write" element={<UserTestimonial />} />
                   
                   {/* Admin & Showroom Routes */}
@@ -144,6 +148,9 @@ function App() {
                     <Route path="services" element={<Services />} />
                     <Route path="bookings" element={<Bookings />} />
                     <Route path="contacts" element={<Contacts />} />
+                    <Route path="staff" element={<Staff />} />
+                    <Route path="approvals" element={<Approvals />} />
+                    <Route path="audit-logs" element={<AuditLogs />} />
                   </Route>
                 </Routes>
 

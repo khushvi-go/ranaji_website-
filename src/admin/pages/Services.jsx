@@ -155,7 +155,7 @@ const Services = () => {
 
   const handleSave = (data) => {
     if (editingService) {
-      updateService(editingService.id, data);
+      updateService(editingService._id || editingService.id, data);
     } else {
       addService(data);
     }
@@ -283,7 +283,7 @@ const Services = () => {
                 Cancel
               </button>
               <button
-                onClick={() => handleDelete(deleteConfirm.id)}
+                onClick={() => handleDelete(deleteConfirm._id || deleteConfirm.id)}
                 className="flex-1 px-6 py-3 bg-crimson text-cream rounded-lg hover:bg-crimson/80 transition-colors font-body font-medium"
               >
                 Delete

@@ -1,36 +1,24 @@
 const express = require("express");
 const router = express.Router();
-
 const Category = require("../models/Category");
-const { authenticate } = require("../middleware/auth");
+const { optionalAuth } = require("../middleware/auth");
 
 // Get all categories
 router.get("/", async (req, res) => {
   try {
-    const {
-      search,
-      active,
-      sort,
-      page,
-      limit  
-    } = req.query;
+    const { search, active, sort, page, limit, all } = req.query;
     let query = {};
 
-    if (active === "true")
-      query.isActive = true;
-    
+    if (active === "true") query.isActive = true;
+
     if (search) {
       query.name = {
         $regex: search,
         $options: "i"
       };
     }
-    const pageNumber = Math.max(1, Number(page) || 1);
-    const pageSize = Math.min(50, Math.max(1, Number(limit) || 10));
-    
-    const skip = (pageNumber - 1) * pageSize;
+
     let sortOption = { createdAt: -1 };
-    
     switch (sort) {
       case "oldest":
         sortOption = { createdAt: 1 };
@@ -45,150 +33,138 @@ router.get("/", async (req, res) => {
         sortOption = { createdAt: -1 };
         break;
     }
+
     const total = await Category.countDocuments(query);
-    
-    const categories = await Category.find(query)
-      .sort(sortOption)
-      .skip(skip)
-      .limit(pageSize);
-      res.json({
-        success: true,
-        total,
-        page: pageNumber,
-        pages: Math.ceil(total / pageSize),
-        count: categories.length,
-        data: categories
 
-        
-      });
+    let queryExec = Category.find(query).sort(sortOption);
 
+    if (all !== "true" && (page || limit)) {
+      const pageNumber = Math.max(1, Number(page) || 1);
+      const pageSize = Math.min(100, Math.max(1, Number(limit) || 20));
+      const skip = (pageNumber - 1) * pageSize;
+      queryExec = queryExec.skip(skip).limit(pageSize);
+    }
 
+    const categories = await queryExec;
+
+    res.json({
+      success: true,
+      total,
+      count: categories.length,
+      data: categories.map((c) => c.toJSON())
+    });
   } catch (err) {
     res.status(500).json({
       success: false,
       message: err.message
     });
   }
-
-
 });
 
 // Get single category
 router.get("/:id", async (req, res) => {
   try {
-
-    const category = await Category.findById(req.params.id);
+    let category = null;
+    if (req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      category = await Category.findById(req.params.id);
+    }
+    if (!category) {
+      category = await Category.findOne({ slug: req.params.id.toLowerCase() });
+    }
 
     if (!category) {
       return res.status(404).json({
-        success:false,
-        message:"Category not found"
+        success: false,
+        message: "Category not found"
       });
     }
 
     res.json({
-      success:true,
-      data:category
+      success: true,
+      data: category.toJSON()
     });
-
-  } catch(err){
-
+  } catch (err) {
     res.status(500).json({
-      success:false,
-      message:err.message
+      success: false,
+      message: err.message
     });
-
   }
 });
 
 // Create category
-router.post("/", authenticate, async (req,res)=>{
+router.post("/", optionalAuth, async (req, res) => {
+  try {
+    const slug = (req.body.slug || req.body.name || `cat-${Date.now()}`)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-");
 
-  try{
-
-    const category = await Category.create(req.body);
+    const category = await Category.create({
+      ...req.body,
+      slug
+    });
 
     res.status(201).json({
-      success:true,
-      data:category
+      success: true,
+      data: category.toJSON()
     });
-
-  }catch(err){
-
+  } catch (err) {
     res.status(400).json({
-      success:false,
-      message:err.message
+      success: false,
+      message: err.message
     });
-
   }
-
 });
 
 // Update category
-router.put("/:id", authenticate, async(req,res)=>{
+router.put("/:id", optionalAuth, async (req, res) => {
+  try {
+    const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    });
 
-  try{
-
-    const category = await Category.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new:true,
-        runValidators:true
-      }
-    );
-
-    if(!category){
+    if (!category) {
       return res.status(404).json({
-        success:false,
-        message:"Category not found"
+        success: false,
+        message: "Category not found"
       });
     }
 
     res.json({
-      success:true,
-      data:category
+      success: true,
+      data: category.toJSON()
     });
-
-  }catch(err){
-
+  } catch (err) {
     res.status(400).json({
-      success:false,
-      message:err.message
+      success: false,
+      message: err.message
     });
-
   }
-
 });
 
 // Delete category
-router.delete("/:id", authenticate, async(req,res)=>{
-
-  try{
-
+router.delete("/:id", optionalAuth, async (req, res) => {
+  try {
     const category = await Category.findByIdAndDelete(req.params.id);
 
-    if(!category){
+    if (!category) {
       return res.status(404).json({
-        success:false,
-        message:"Category not found"
+        success: false,
+        message: "Category not found"
       });
     }
 
     res.json({
-      success:true,
-      message:"Category deleted successfully"
+      success: true,
+      message: "Category deleted successfully"
     });
-
-  }catch(err){
-
+  } catch (err) {
     res.status(500).json({
-      success:false,
-      message:err.message
+      success: false,
+      message: err.message
     });
-
   }
-
 });
 
 module.exports = router;

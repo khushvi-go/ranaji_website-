@@ -16,14 +16,18 @@ import {
   Tags,
   Receipt,
   Package,
-  Users
+  Users,
+  ShieldCheck,
+  ScrollText,
+  ShieldAlert,
+  UserCog
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 
 const AdminLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { logout, adminUser, stats } = useAdmin();
+  const { logout, adminUser, stats, role, isOwner, isManager, isCashier, isInventory, permissions } = useAdmin();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -31,20 +35,26 @@ const AdminLayout = () => {
     navigate('/admin/login');
   };
 
-  const menuItems = [
-    { path: '/admin', icon: LayoutDashboard, label: 'Overview', exact: true },
-    { path: '/admin/pos', icon: Receipt, label: 'Point of Sale (POS)', counterBadge: 'COUNTER' },
-    { path: '/admin/sales', icon: Receipt, label: 'Sales & Invoices' },
-    { path: '/admin/inventory', icon: Package, label: 'Garment Inventory' },
-    { path: '/admin/customers', icon: Users, label: 'Showroom Clients' },
-    { path: '/admin/collections', icon: ShoppingBag, label: 'Garment Outfits' },
-    { path: '/admin/categories', icon: Tags, label: 'Categories' },
-    { path: '/admin/testimonials', icon: MessageSquare, label: 'Testimonials' },
-    { path: '/admin/gallery', icon: Image, label: 'Showcase Gallery' },
-    { path: '/admin/services', icon: Briefcase, label: 'Royal Services' },
-    { path: '/admin/bookings', icon: Calendar, label: 'Bookings', badge: stats.pendingBookings },
-    { path: '/admin/contacts', icon: Mail, label: 'Inquiries', badge: stats.unreadContacts },
+  const allMenuItems = [
+    { path: '/admin', icon: LayoutDashboard, label: 'Overview', exact: true, roles: ['owner', 'admin', 'manager'] },
+    { path: '/admin/pos', icon: Receipt, label: 'Point of Sale (POS)', counterBadge: 'COUNTER', roles: ['owner', 'admin', 'manager', 'cashier'] },
+    { path: '/admin/sales', icon: Receipt, label: 'Sales & Invoices', roles: ['owner', 'admin', 'manager', 'cashier'] },
+    { path: '/admin/inventory', icon: Package, label: 'Garment Inventory', roles: ['owner', 'admin', 'manager', 'inventory'] },
+    { path: '/admin/customers', icon: Users, label: 'Showroom Clients', roles: ['owner', 'admin', 'manager', 'cashier'] },
+    { path: '/admin/approvals', icon: ShieldCheck, label: 'Approvals', roles: ['owner', 'admin', 'manager', 'cashier', 'inventory'] },
+    { path: '/admin/staff', icon: UserCog, label: 'Staff & Security', roles: ['owner', 'admin'] },
+    { path: '/admin/audit-logs', icon: ScrollText, label: 'Audit Trail', roles: ['owner', 'admin', 'manager'] },
+    { path: '/admin/collections', icon: ShoppingBag, label: 'Garment Outfits', roles: ['owner', 'admin', 'manager', 'inventory'] },
+    { path: '/admin/categories', icon: Tags, label: 'Categories', roles: ['owner', 'admin', 'manager', 'inventory'] },
+    { path: '/admin/testimonials', icon: MessageSquare, label: 'Testimonials', badge: stats.pendingTestimonials, roles: ['owner', 'admin', 'manager'] },
+    { path: '/admin/gallery', icon: Image, label: 'Showcase Gallery', roles: ['owner', 'admin', 'manager'] },
+    { path: '/admin/services', icon: Briefcase, label: 'Royal Services', roles: ['owner', 'admin', 'manager'] },
+    { path: '/admin/bookings', icon: Calendar, label: 'Bookings', badge: stats.pendingBookings, roles: ['owner', 'admin', 'manager'] },
+    { path: '/admin/contacts', icon: Mail, label: 'Inquiries', badge: stats.unreadContacts, roles: ['owner', 'admin', 'manager'] },
   ];
+
+  const currentRole = role || (adminUser?.role === 'admin' ? 'owner' : (adminUser?.role || 'owner'));
+  const menuItems = allMenuItems.filter((item) => item.roles.includes(currentRole));
 
   return (
     <div className="min-h-screen bg-night flex">
@@ -130,8 +140,14 @@ const AdminLayout = () => {
                 exit={{ opacity: 0 }}
                 className="mb-4 px-2"
               >
-                <p className="text-cream/50 text-xs font-body mb-1">Logged in as</p>
-                <p className="text-cream font-body text-sm">{adminUser.username}</p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-cream/50 text-[10px] uppercase font-bold tracking-wider">Showroom Staff</p>
+                  <span className="text-[9px] font-bold uppercase tracking-wider bg-gold/15 text-gold border border-gold/30 px-1.5 py-0.5 rounded">
+                    {currentRole}
+                  </span>
+                </div>
+                <p className="text-cream font-display text-sm font-bold truncate">{adminUser.name || adminUser.username || adminUser.email}</p>
+                <p className="text-cream/40 font-mono text-[10px] truncate">{adminUser.email}</p>
               </motion.div>
             )}
           </AnimatePresence>

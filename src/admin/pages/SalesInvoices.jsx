@@ -13,18 +13,32 @@ import {
   Clock, 
   Banknote, 
   QrCode,
-  DollarSign
+  DollarSign,
+  RotateCcw,
+  ShieldAlert,
+  Key
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useBusiness } from '../../context/BusinessContext';
+import { useAdmin } from '../../context/AdminContext';
+import { salesAPI, approvalsAPI } from '../../services/api';
 import { formatINR } from '../../utils/billingCalculator';
 import PrintableInvoice from '../components/PrintableInvoice';
 
 const SalesInvoices = () => {
-  const { sales } = useBusiness();
+  const { sales, refreshBusinessData } = useBusiness();
+  const { role, permissions } = useAdmin();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedSaleForInvoice, setSelectedSaleForInvoice] = useState(null);
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+
+  // Refund states
+  const [selectedSaleForRefund, setSelectedSaleForRefund] = useState(null);
+  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
+  const [refundReason, setRefundReason] = useState('Customer return / garment exchange');
+  const [approvalCode, setApprovalCode] = useState('');
+  const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
 
   // Filtered sales
   const filteredSales = useMemo(() => {
@@ -74,6 +88,37 @@ const SalesInvoices = () => {
   const handleOpenInvoice = (sale) => {
     setSelectedSaleForInvoice(sale);
     setIsInvoiceOpen(true);
+  };
+
+  const handleOpenRefund = (sale) => {
+    setSelectedSaleForRefund(sale);
+    setRefundReason('Customer return / garment exchange');
+    setApprovalCode('');
+    setIsRefundModalOpen(true);
+  };
+
+  const handleSubmitRefund = async (e) => {
+    e.preventDefault();
+    if (!selectedSaleForRefund) return;
+
+    try {
+      setIsSubmittingRefund(true);
+      const res = await salesAPI.refund(selectedSaleForRefund.id || selectedSaleForRefund._id, {
+        reason: refundReason,
+        approvalCode: approvalCode ? approvalCode.trim().toUpperCase() : undefined
+      });
+
+      if (res.success) {
+        toast.success(`Invoice #${selectedSaleForRefund.invoiceNumber} refunded & items restocked`);
+        setIsRefundModalOpen(false);
+        setSelectedSaleForRefund(null);
+        if (refreshBusinessData) refreshBusinessData();
+      }
+    } catch (err) {
+      toast.error(err.message || 'Refund processing failed');
+    } finally {
+      setIsSubmittingRefund(false);
+    }
   };
 
   return (
@@ -234,26 +279,44 @@ const SalesInvoices = () => {
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-center">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                          status === 'PAID'
-                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                            : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                        }`}>
-                          {status}
-                        </span>
+                        {sale.status === 'REFUNDED' || sale.refundDetails?.isRefunded ? (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30">
+                            REFUNDED
+                          </span>
+                        ) : (
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                            status === 'PAID'
+                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                              : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                          }`}>
+                            {status}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-right font-display text-sm font-bold text-cream font-mono">
                         {formatINR(sale.calculation?.grandTotal || 0)}
                       </td>
                       <td className="py-3.5 px-4 text-center">
-                        <button
-                          onClick={() => handleOpenInvoice(sale)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-gold/10 hover:bg-gold/20 text-gold border border-gold/30 rounded-lg text-xs font-body transition-colors"
-                          title="View and Print Official Tax Invoice"
-                        >
-                          <Printer size={13} />
-                          <span>Invoice</span>
-                        </button>
+                        <div className="inline-flex items-center gap-1.5 justify-center">
+                          <button
+                            onClick={() => handleOpenInvoice(sale)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-gold/10 hover:bg-gold/20 text-gold border border-gold/30 rounded-lg text-xs font-body transition-colors"
+                            title="View and Print Official Tax Invoice"
+                          >
+                            <Printer size={12} />
+                            <span>Invoice</span>
+                          </button>
+                          {sale.status !== 'REFUNDED' && !sale.refundDetails?.isRefunded && (
+                            <button
+                              onClick={() => handleOpenRefund(sale)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-body transition-colors"
+                              title="Process Authorized Refund & Restock Items"
+                            >
+                              <RotateCcw size={12} />
+                              <span>Refund</span>
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -270,6 +333,92 @@ const SalesInvoices = () => {
         isOpen={isInvoiceOpen}
         onClose={() => setIsInvoiceOpen(false)}
       />
+
+      {/* Authorized Refund Modal */}
+      {isRefundModalOpen && selectedSaleForRefund && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-night border border-gold/30 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl font-body">
+            <div className="flex items-center justify-between border-b border-gold/20 pb-3">
+              <div className="flex items-center gap-2 text-gold">
+                <RotateCcw size={20} />
+                <h3 className="font-display text-lg text-cream">Authorized Invoice Refund</h3>
+              </div>
+              <button onClick={() => setIsRefundModalOpen(false)} className="text-cream/50 hover:text-cream">&times;</button>
+            </div>
+
+            <div className="p-3 rounded-xl bg-cream/5 border border-gold/10 space-y-1 text-xs">
+              <div className="flex justify-between">
+                <span className="text-cream/60">Invoice Number:</span>
+                <span className="font-mono font-bold text-gold">{selectedSaleForRefund.invoiceNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-cream/60">Customer:</span>
+                <span className="text-cream font-bold">{selectedSaleForRefund.customer?.name || 'Walk-in'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-cream/60">Refund Grand Total:</span>
+                <span className="font-mono font-bold text-cream">{formatINR(selectedSaleForRefund.calculation?.grandTotal || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-cream/60">Items to Restock:</span>
+                <span className="font-mono text-cream/80">{selectedSaleForRefund.items?.length || 0} outfits</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmitRefund} className="space-y-3 text-xs">
+              <div>
+                <label className="text-cream/70 block mb-1">Reason for Return / Refund</label>
+                <input
+                  type="text"
+                  required
+                  value={refundReason}
+                  onChange={(e) => setRefundReason(e.target.value)}
+                  placeholder="e.g. Size mismatch / Customer returned unworn ensemble"
+                  className="w-full bg-night border border-gold/20 rounded-xl px-3 py-2 text-cream outline-none focus:border-gold"
+                />
+              </div>
+
+              {/* If cashier, prompt for Approval Code */}
+              {!permissions?.canRefund && (
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+                  <div className="flex items-center gap-1.5 text-amber-400 font-bold">
+                    <Key size={13} />
+                    <span>Manager Authorization Code Required</span>
+                  </div>
+                  <p className="text-[11px] text-cream/70">
+                    Cashiers cannot process refunds without authorized Manager or Owner approval.
+                  </p>
+                  <input
+                    type="text"
+                    required
+                    value={approvalCode}
+                    onChange={(e) => setApprovalCode(e.target.value)}
+                    placeholder="Enter 6-char authorization code (e.g. RNJ-APP-A1B2)"
+                    className="w-full bg-night border border-amber-500/40 rounded-xl px-3 py-2 text-cream font-mono uppercase tracking-wider outline-none focus:border-gold"
+                  />
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-gold/10">
+                <button
+                  type="button"
+                  onClick={() => setIsRefundModalOpen(false)}
+                  className="px-4 py-2 text-cream/70 hover:bg-cream/5 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingRefund}
+                  className="px-5 py-2 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50"
+                >
+                  {isSubmittingRefund ? 'Processing...' : 'Confirm Traceable Refund'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

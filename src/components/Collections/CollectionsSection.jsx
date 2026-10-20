@@ -25,7 +25,7 @@ const CollectionsSection = () => {
   const formattedCategories = useMemo(() => {
     return [
       { id: 'all', label: 'All Collections' },
-      ...categories.map((c) => ({ id: c.id, label: c.name }))
+      ...categories.map((c) => ({ id: c.slug || c.id, label: c.name }))
     ];
   }, [categories]);
 
@@ -42,8 +42,14 @@ const CollectionsSection = () => {
   const filteredCollections = useMemo(() => {
     return products.filter((item) => {
       // Category filter
-      if (activeCategory !== 'all' && item.category !== activeCategory) {
-        return false;
+      if (activeCategory !== 'all') {
+        const matchesCategory =
+          item.category === activeCategory ||
+          item.categorySlug === activeCategory ||
+          String(item.category) === String(activeCategory);
+        if (!matchesCategory) {
+          return false;
+        }
       }
 
       // Subcategory filter

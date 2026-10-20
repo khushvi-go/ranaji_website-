@@ -1,5 +1,14 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI, collectionsAPI, testimonialsAPI, galleryAPI, servicesAPI, bookingsAPI, contactsAPI } from '../services/api';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { 
+  authAPI, 
+  collectionsAPI, 
+  testimonialsAPI, 
+  galleryAPI, 
+  servicesAPI, 
+  bookingsAPI, 
+  contactsAPI,
+  dashboardAPI
+} from '../services/api';
 
 const AdminContext = createContext();
 
@@ -23,105 +32,101 @@ export const AdminProvider = ({ children }) => {
   const [services, setServices] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [contacts, setContacts] = useState([]);
+  const [serverStats, setServerStats] = useState(null);
 
-  // Load data on mount
-  useEffect(() => {
-    const token = localStorage.getItem('ranaji-admin-token');
-    if (token) {
-      if (token === 'mock-admin-token') {
-        setIsAuthenticated(true);
-        setAdminUser({ id: 'admin-local', name: 'Ranaji Admin', email: 'admin@ranaji.store', role: 'admin' });
-        setLoading(false);
-      } else {
-        // Verify token validity
-        authAPI.verifyToken()
-          .then(response => {
-            if (response.valid) {
-              setIsAuthenticated(true);
-              setAdminUser(response.user);
-            } else {
-              localStorage.removeItem('ranaji-admin-token');
-            }
-          })
-          .catch(() => {
-            localStorage.removeItem('ranaji-admin-token');
-          })
-          .finally(() => setLoading(false));
-      }
-    } else {
-      setLoading(false);
-    }
-
-    // Fetch public data
-    fetchPublicData();
-  }, []);
-
-  // Fetch all public data
-  const fetchPublicData = async () => {
+  // Fetch all public showcase data from MongoDB Atlas
+  const fetchPublicData = useCallback(async () => {
     try {
       const [collectionsRes, testimonialsRes, galleryRes, servicesRes] = await Promise.all([
-        collectionsAPI.getAll('?active=true'),
+        collectionsAPI.getAll('?all=true'),
         testimonialsAPI.getAll('?active=true'),
         galleryAPI.getAll('?active=true'),
         servicesAPI.getAll('?active=true'),
       ]);
       
-      setCollections(collectionsRes || []);
-      setTestimonials(testimonialsRes || []);
-      setGallery(galleryRes || []);
-      setServices(servicesRes || []);
+      setCollections(Array.isArray(collectionsRes) ? collectionsRes : collectionsRes.data || []);
+      setTestimonials(Array.isArray(testimonialsRes) ? testimonialsRes : testimonialsRes.data || []);
+      setGallery(Array.isArray(galleryRes) ? galleryRes : galleryRes.data || []);
+      setServices(Array.isArray(servicesRes) ? servicesRes : servicesRes.data || []);
     } catch (error) {
-      console.error('Error fetching public data:', error);
+      console.error('Error fetching public showcase data from MongoDB Atlas:', error);
     }
-  };
+  }, []);
 
-  // Fetch admin data (bookings, contacts)
-  const fetchAdminData = async () => {
-    if (!isAuthenticated) return;
+  // Fetch admin-protected data from MongoDB Atlas
+  const fetchAdminData = useCallback(async () => {
+    const token = localStorage.getItem('ranaji-admin-token');
+    if (!token) return;
     
     try {
-      const [bookingsRes, contactsRes] = await Promise.all([
+      const [bookingsRes, contactsRes, statsRes, testimonialsRes] = await Promise.all([
         bookingsAPI.getAll(),
         contactsAPI.getAll(),
+        dashboardAPI.getStats().catch(() => null),
+        testimonialsAPI.getAll()
       ]);
       
-      setBookings(bookingsRes || []);
-      setContacts(contactsRes || []);
+      setBookings(Array.isArray(bookingsRes) ? bookingsRes : bookingsRes.data || []);
+      setContacts(Array.isArray(contactsRes) ? contactsRes : contactsRes.data || []);
+      if (testimonialsRes) {
+        setTestimonials(Array.isArray(testimonialsRes) ? testimonialsRes : testimonialsRes.data || []);
+      }
+      if (statsRes && statsRes.data) {
+        setServerStats(statsRes.data);
+      }
     } catch (error) {
-      console.error('Error fetching admin data:', error);
+      console.error('Error fetching admin records from MongoDB Atlas:', error);
     }
-  };
+  }, []);
 
-  // Load admin data when authenticated
+  // Check auth state on mount
+  useEffect(() => {
+    const token = localStorage.getItem('ranaji-admin-token');
+    if (token) {
+      authAPI.verifyToken()
+        .then(response => {
+          const staffRoles = ['admin', 'owner', 'manager', 'cashier', 'inventory'];
+          if (response.valid && staffRoles.includes(response.user?.role)) {
+            setIsAuthenticated(true);
+            setAdminUser(response.user);
+          } else {
+            localStorage.removeItem('ranaji-admin-token');
+            setIsAuthenticated(false);
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem('ranaji-admin-token');
+          setIsAuthenticated(false);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+
+    fetchPublicData();
+  }, [fetchPublicData]);
+
+  // Load admin records whenever authenticated
   useEffect(() => {
     if (isAuthenticated) {
       fetchAdminData();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchAdminData]);
 
-  // Auth functions
+  // Auth functions - Real MongoDB verification
   const login = async (username, password) => {
     try {
-      const response = await authAPI.login({ username, password });
+      const response = await authAPI.login({ email: username, password });
       
-      if (response.success) {
+      if (response.success && response.token) {
         setIsAuthenticated(true);
         setAdminUser(response.user);
         localStorage.setItem('ranaji-admin-token', response.token);
         return { success: true };
       }
-      return { success: false, message: response.message };
+      return { success: false, message: response.message || 'Login failed' };
     } catch (error) {
-      if (
-        (username === 'admin' && (password === 'admin' || password === 'admin123' || password === 'ranaji')) ||
-        (username === 'admin@ranaji.com')
-      ) {
-        setIsAuthenticated(true);
-        setAdminUser({ id: 'admin-local', name: 'Ranaji Admin', email: 'admin@ranaji.store', role: 'admin' });
-        localStorage.setItem('ranaji-admin-token', 'mock-admin-token');
-        return { success: true };
-      }
-      return { success: false, message: error.message || 'Login failed' };
+      return { success: false, message: error.message || 'Invalid administrator credentials' };
     }
   };
 
@@ -133,12 +138,13 @@ export const AdminProvider = ({ children }) => {
     setContacts([]);
   };
 
-  // Collections
+  // Collections (Products) CRUD
   const addCollection = async (collection) => {
     try {
       const response = await collectionsAPI.create(collection);
-      setCollections([...collections, response]);
-      return { success: true };
+      const newCol = response.data || response;
+      setCollections(prev => [newCol, ...prev]);
+      return { success: true, data: newCol };
     } catch (error) {
       return { success: false, message: error.message };
     }
@@ -147,8 +153,9 @@ export const AdminProvider = ({ children }) => {
   const updateCollection = async (id, updatedData) => {
     try {
       const response = await collectionsAPI.update(id, updatedData);
-      setCollections(collections.map(c => c._id === id ? response : c));
-      return { success: true };
+      const updated = response.data || response;
+      setCollections(prev => prev.map(c => (c.id === id || c._id === id ? { ...c, ...updated } : c)));
+      return { success: true, data: updated };
     } catch (error) {
       return { success: false, message: error.message };
     }
@@ -157,19 +164,20 @@ export const AdminProvider = ({ children }) => {
   const deleteCollection = async (id) => {
     try {
       await collectionsAPI.delete(id);
-      setCollections(collections.filter(c => c._id !== id));
+      setCollections(prev => prev.filter(c => c.id !== id && c._id !== id));
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
     }
   };
 
-  // Testimonials
+  // Testimonials CRUD
   const addTestimonial = async (testimonial) => {
     try {
       const response = await testimonialsAPI.create(testimonial);
-      setTestimonials([...testimonials, response]);
-      return { success: true };
+      const newT = response.data || response;
+      setTestimonials(prev => [newT, ...prev]);
+      return { success: true, data: newT };
     } catch (error) {
       return { success: false, message: error.message };
     }
@@ -178,8 +186,9 @@ export const AdminProvider = ({ children }) => {
   const updateTestimonial = async (id, updatedData) => {
     try {
       const response = await testimonialsAPI.update(id, updatedData);
-      setTestimonials(testimonials.map(t => t._id === id ? response : t));
-      return { success: true };
+      const updated = response.data || response;
+      setTestimonials(prev => prev.map(t => (t.id === id || t._id === id ? { ...t, ...updated } : t)));
+      return { success: true, data: updated };
     } catch (error) {
       return { success: false, message: error.message };
     }
@@ -188,19 +197,42 @@ export const AdminProvider = ({ children }) => {
   const deleteTestimonial = async (id) => {
     try {
       await testimonialsAPI.delete(id);
-      setTestimonials(testimonials.filter(t => t._id !== id));
+      setTestimonials(prev => prev.filter(t => t.id !== id && t._id !== id));
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
     }
   };
 
-  // Gallery
+  const approveTestimonial = async (id) => {
+    try {
+      const response = await testimonialsAPI.approve(id);
+      const updated = response.data || response;
+      setTestimonials(prev => prev.map(t => (t.id === id || t._id === id ? { ...t, ...updated, status: 'approved', isActive: true } : t)));
+      return { success: true, data: updated };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  };
+
+  const rejectTestimonial = async (id) => {
+    try {
+      const response = await testimonialsAPI.reject(id);
+      const updated = response.data || response;
+      setTestimonials(prev => prev.map(t => (t.id === id || t._id === id ? { ...t, ...updated, status: 'rejected', isActive: false } : t)));
+      return { success: true, data: updated };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  };
+
+  // Gallery CRUD
   const addGalleryImage = async (image) => {
     try {
       const response = await galleryAPI.create(image);
-      setGallery([...gallery, response]);
-      return { success: true };
+      const newG = response.data || response;
+      setGallery(prev => [newG, ...prev]);
+      return { success: true, data: newG };
     } catch (error) {
       return { success: false, message: error.message };
     }
@@ -209,8 +241,9 @@ export const AdminProvider = ({ children }) => {
   const updateGalleryImage = async (id, updatedData) => {
     try {
       const response = await galleryAPI.update(id, updatedData);
-      setGallery(gallery.map(g => g._id === id ? response : g));
-      return { success: true };
+      const updated = response.data || response;
+      setGallery(prev => prev.map(g => (g.id === id || g._id === id ? { ...g, ...updated } : g)));
+      return { success: true, data: updated };
     } catch (error) {
       return { success: false, message: error.message };
     }
@@ -219,19 +252,20 @@ export const AdminProvider = ({ children }) => {
   const deleteGalleryImage = async (id) => {
     try {
       await galleryAPI.delete(id);
-      setGallery(gallery.filter(g => g._id !== id));
+      setGallery(prev => prev.filter(g => g.id !== id && g._id !== id));
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
     }
   };
 
-  // Services
+  // Services CRUD
   const addService = async (service) => {
     try {
       const response = await servicesAPI.create(service);
-      setServices([...services, response]);
-      return { success: true };
+      const newS = response.data || response;
+      setServices(prev => [...prev, newS]);
+      return { success: true, data: newS };
     } catch (error) {
       return { success: false, message: error.message };
     }
@@ -240,8 +274,9 @@ export const AdminProvider = ({ children }) => {
   const updateService = async (id, updatedData) => {
     try {
       const response = await servicesAPI.update(id, updatedData);
-      setServices(services.map(s => s._id === id ? response : s));
-      return { success: true };
+      const updated = response.data || response;
+      setServices(prev => prev.map(s => (s.id === id || s._id === id ? { ...s, ...updated } : s)));
+      return { success: true, data: updated };
     } catch (error) {
       return { success: false, message: error.message };
     }
@@ -250,19 +285,20 @@ export const AdminProvider = ({ children }) => {
   const deleteService = async (id) => {
     try {
       await servicesAPI.delete(id);
-      setServices(services.filter(s => s._id !== id));
+      setServices(prev => prev.filter(s => s.id !== id && s._id !== id));
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
     }
   };
 
-  // Bookings
+  // Bookings CRUD
   const addBooking = async (booking) => {
     try {
       const response = await bookingsAPI.create(booking);
-      setBookings([...bookings, response]);
-      return { success: true };
+      const newB = response.data || response;
+      setBookings(prev => [newB, ...prev]);
+      return { success: true, data: newB };
     } catch (error) {
       return { success: false, message: error.message };
     }
@@ -271,8 +307,9 @@ export const AdminProvider = ({ children }) => {
   const updateBookingStatus = async (id, status) => {
     try {
       const response = await bookingsAPI.update(id, { status });
-      setBookings(bookings.map(b => b._id === id ? response : b));
-      return { success: true };
+      const updated = response.data || response;
+      setBookings(prev => prev.map(b => (b.id === id || b._id === id ? { ...b, ...updated } : b)));
+      return { success: true, data: updated };
     } catch (error) {
       return { success: false, message: error.message };
     }
@@ -281,29 +318,48 @@ export const AdminProvider = ({ children }) => {
   const deleteBooking = async (id) => {
     try {
       await bookingsAPI.delete(id);
-      setBookings(bookings.filter(b => b._id !== id));
+      setBookings(prev => prev.filter(b => b.id !== id && b._id !== id));
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
     }
   };
 
-  // Contacts
+  // Contacts CRUD
   const addContact = async (contact) => {
     try {
       const response = await contactsAPI.create(contact);
-      setContacts([...contacts, response]);
-      return { success: true };
+      const newC = response.data || response;
+      setContacts(prev => [newC, ...prev]);
+      return { success: true, data: newC };
     } catch (error) {
       return { success: false, message: error.message };
     }
   };
 
-  const markContactAsRead = async (id) => {
+  const markContactAsRead = async (id, isRead = true) => {
     try {
-      const response = await contactsAPI.markAsRead(id);
-      setContacts(contacts.map(c => c._id === id ? response : c));
-      return { success: true };
+      const response = await contactsAPI.markAsRead(id, isRead);
+      const updated = response.data || response;
+      setContacts(prev => prev.map(c => (c.id === id || c._id === id ? { ...c, ...updated, read: isRead } : c)));
+      return { success: true, data: updated };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  };
+
+  const markContactAsReplied = async (id, replyNotes = '') => {
+    try {
+      const response = await contactsAPI.markAsReplied(id, replyNotes);
+      const updated = response.data || response;
+      setContacts(prev => prev.map(c => (c.id === id || c._id === id ? { 
+        ...c, 
+        ...updated, 
+        replied: true, 
+        read: true, 
+        replyNotes: replyNotes || c.replyNotes 
+      } : c)));
+      return { success: true, data: updated };
     } catch (error) {
       return { success: false, message: error.message };
     }
@@ -312,16 +368,44 @@ export const AdminProvider = ({ children }) => {
   const deleteContact = async (id) => {
     try {
       await contactsAPI.delete(id);
-      setContacts(contacts.filter(c => c._id !== id));
+      setContacts(prev => prev.filter(c => c.id !== id && c._id !== id));
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };
     }
   };
 
+  const role = adminUser?.role === 'admin' ? 'owner' : (adminUser?.role || 'owner');
+  const isOwner = role === 'owner';
+  const isManager = role === 'manager';
+  const isCashier = role === 'cashier';
+  const isInventory = role === 'inventory';
+
+  const permissions = {
+    role,
+    isOwner,
+    isManager,
+    isCashier,
+    isInventory,
+    canManageStaff: isOwner,
+    canViewAuditLogs: isOwner || isManager,
+    canApprove: isOwner || isManager,
+    canRefund: isOwner || isManager,
+    canAdjustInventory: isOwner || isManager || isInventory,
+    canDeleteProducts: isOwner || isManager,
+    canExportCustomers: isOwner || isManager,
+    canConfigureSettings: isOwner,
+  };
+
   const value = {
     isAuthenticated,
     adminUser,
+    role,
+    isOwner,
+    isManager,
+    isCashier,
+    isInventory,
+    permissions,
     loading,
     login,
     logout,
@@ -332,6 +416,8 @@ export const AdminProvider = ({ children }) => {
     testimonials,
     addTestimonial,
     updateTestimonial,
+    approveTestimonial,
+    rejectTestimonial,
     deleteTestimonial,
     gallery,
     addGalleryImage,
@@ -348,18 +434,21 @@ export const AdminProvider = ({ children }) => {
     contacts,
     addContact,
     markContactAsRead,
+    markContactAsReplied,
     deleteContact,
     refreshData: fetchPublicData,
     refreshAdminData: fetchAdminData,
     stats: {
       totalCollections: collections.length,
       totalTestimonials: testimonials.length,
+      pendingTestimonials: testimonials.filter(t => (t.status || (t.isActive ? 'approved' : 'pending')) === 'pending').length,
       totalGallery: gallery.length,
       totalServices: services.length,
-      totalBookings: bookings.length,
-      totalContacts: contacts.length,
-      unreadContacts: contacts.filter(c => !c.read).length,
-      pendingBookings: bookings.filter(b => b.status === 'pending').length
+      totalBookings: serverStats?.totalBookings ?? bookings.length,
+      totalContacts: serverStats?.totalContacts ?? contacts.length,
+      unreadContacts: serverStats?.unreadContacts ?? contacts.filter(c => !c.read).length,
+      pendingContacts: contacts.filter(c => !c.replied).length,
+      pendingBookings: serverStats?.pendingBookings ?? bookings.filter(b => b.status === 'pending').length
     }
   };
 

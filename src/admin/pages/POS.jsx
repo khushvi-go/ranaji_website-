@@ -258,7 +258,7 @@ const POS = () => {
   };
 
   // Finalize Sale & Generate Invoice
-  const handleFinalizeSale = () => {
+  const handleFinalizeSale = async () => {
     let payments = [];
     let amountPaid = billCalc.grandTotal;
 
@@ -310,7 +310,7 @@ const POS = () => {
     };
 
     // Atomic execution & persistence
-    const res = recordSale(salePayload);
+    const res = await recordSale(salePayload);
     if (res.success) {
       setCompletedSale(res.sale);
       setIsPaymentModalOpen(false);

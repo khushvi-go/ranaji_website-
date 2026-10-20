@@ -34,14 +34,30 @@ const CategorySchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
-    subcategories: [{
-      type: String,
-      trim: true
-    }]
+    subcategories: [
+      {
+        type: String,
+        trim: true
+      }
+    ]
   },
   {
     timestamps: true
   }
 );
 
-module.exports = mongoose.model("Category", CategorySchema);        
+CategorySchema.virtual("id").get(function () {
+  return this._id.toHexString();
+});
+
+CategorySchema.set("toJSON", {
+  virtuals: true,
+  transform: (doc, ret) => {
+    ret.id = ret._id.toString();
+    return ret;
+  }
+});
+
+CategorySchema.set("toObject", { virtuals: true });
+
+module.exports = mongoose.model("Category", CategorySchema);

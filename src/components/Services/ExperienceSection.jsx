@@ -1,23 +1,28 @@
-import { useRef, useEffect, useState } from 'react';
-import { motion, useInView, AnimatePresence } from 'framer-motion';
+import { useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Shirt, Ruler, Users, ArrowRight, Crown, Sparkles } from 'lucide-react';
 import SectionHeading from '../UI/SectionHeading';
-import { services } from '../../data/services';
+import { useAdmin } from '../../context/AdminContext';
 
 gsap.registerPlugin(ScrollTrigger);
 
 const iconMap = {
   rental: Shirt,
   fitting: Ruler,
-  ensemble: Users
+  ensemble: Users,
+  Crown: Crown
 };
+
+const defaultColors = ['#9D473A', '#DEA044', '#416A81'];
 
 // Individual Flip Card Component
 const ServiceFlipCard = ({ service, index }) => {
   const [isFlipped, setIsFlipped] = useState(false);
-  const IconComponent = iconMap[service.icon];
+  const IconComponent = iconMap[service.icon] || Shirt;
+  const accentColor = service.accentColor || defaultColors[index % defaultColors.length];
+  const features = Array.isArray(service.features) ? service.features : [];
 
   return (
     <motion.div
@@ -43,14 +48,14 @@ const ServiceFlipCard = ({ service, index }) => {
           <div 
             className="relative h-full p-8 border border-gold/20 bg-gradient-to-b from-night to-night-light transition-all duration-500"
             style={{ 
-              boxShadow: `inset 0 0 0 1px ${service.accentColor}15, 0 10px 40px -10px ${service.accentColor}20`
+              boxShadow: `inset 0 0 0 1px ${accentColor}15, 0 10px 40px -10px ${accentColor}20`
             }}
           >
             {/* Animated border gradient on hover */}
             <motion.div
               className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
               style={{
-                background: `linear-gradient(135deg, transparent 40%, ${service.accentColor}30 50%, transparent 60%)`,
+                background: `linear-gradient(135deg, transparent 40%, ${accentColor}30 50%, transparent 60%)`,
                 backgroundSize: '200% 200%',
               }}
               animate={isFlipped ? {
@@ -59,98 +64,73 @@ const ServiceFlipCard = ({ service, index }) => {
               transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
             />
 
-            {/* Corner Decorations */}
+            {/* Corner Accents */}
             <div 
-              className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2 transition-all duration-500 opacity-0 group-hover:opacity-100"
-              style={{ borderColor: service.accentColor }}
+              className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 transition-all duration-300 group-hover:w-12 group-hover:h-12"
+              style={{ borderColor: accentColor }}
             />
             <div 
-              className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 transition-all duration-500 opacity-0 group-hover:opacity-100"
-              style={{ borderColor: service.accentColor }}
+              className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 transition-all duration-300 group-hover:w-12 group-hover:h-12"
+              style={{ borderColor: accentColor }}
             />
             <div 
-              className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 transition-all duration-500 opacity-0 group-hover:opacity-100"
-              style={{ borderColor: service.accentColor }}
+              className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 transition-all duration-300 group-hover:w-12 group-hover:h-12"
+              style={{ borderColor: accentColor }}
             />
             <div 
-              className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 transition-all duration-500 opacity-0 group-hover:opacity-100"
-              style={{ borderColor: service.accentColor }}
-            />
-
-            {/* Accent Line */}
-            <div 
-              className="absolute top-0 left-0 w-full h-1 transition-all duration-500"
-              style={{ backgroundColor: service.accentColor }}
+              className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 transition-all duration-300 group-hover:w-12 group-hover:h-12"
+              style={{ borderColor: accentColor }}
             />
 
-            {/* Animated Background Circles */}
-            <div className="absolute inset-0 flex items-start justify-center pt-16 overflow-hidden pointer-events-none">
-              <div className="relative flex h-[120px] w-[240px] items-center justify-center">
-                {[...Array(8)].map((_, i) => (
-                  <motion.div
-                    className="absolute rounded-full"
-                    key={i}
-                    style={{
-                      width: `${40 + i * 15}px`,
-                      height: `${40 + i * 15}px`,
-                      border: `1px solid ${service.accentColor}`,
-                      opacity: 0.1 + i * 0.05,
-                    }}
-                    animate={{
-                      scale: [1, 1.1, 1],
-                      opacity: [0.1 + i * 0.05, 0.2 + i * 0.05, 0.1 + i * 0.05],
-                    }}
-                    transition={{
-                      duration: 3 + i * 0.5,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                      delay: i * 0.2,
-                    }}
-                  />
-                ))}
+            {/* Content Container */}
+            <div className="relative z-10 flex flex-col justify-between h-full">
+              {/* Top Section - Icon & Badge */}
+              <div>
+                <div className="flex items-center justify-between mb-8">
+                  <motion.div 
+                    className="relative w-16 h-16 flex items-center justify-center rounded-xl"
+                    style={{ backgroundColor: `${accentColor}15` }}
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <IconComponent size={32} style={{ color: accentColor }} />
+                    {/* Pulsing ring around icon */}
+                    <div 
+                      className="absolute inset-0 rounded-xl animate-ping opacity-20 pointer-events-none"
+                      style={{ backgroundColor: accentColor }}
+                    />
+                  </motion.div>
+
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-gold/10 border border-gold/30 rounded-full">
+                    <Sparkles size={12} className="text-gold" />
+                    <span className="text-gold text-xs font-serif tracking-wider uppercase">Royal</span>
+                  </div>
+                </div>
+
+                <h3 className="font-serif text-2xl text-cream mb-4 tracking-wide group-hover:text-gold transition-colors duration-300">
+                  {service.title}
+                </h3>
+
+                <p className="font-body text-cream/70 text-sm leading-relaxed">
+                  {service.description}
+                </p>
+              </div>
+
+              {/* Bottom Section - Flip Prompt */}
+              <div className="pt-6 border-t border-gold/10 flex items-center justify-between">
+                <span className="font-serif text-xs text-gold/60 tracking-widest uppercase">
+                  Explore Details
+                </span>
+                <motion.div 
+                  className="flex items-center gap-2 text-gold text-xs font-body tracking-wider"
+                  animate={{ x: [0, 5, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <span>Hover to flip</span>
+                  <ArrowRight size={14} />
+                </motion.div>
               </div>
             </div>
-
-            {/* Icon */}
-            <motion.div 
-              className="relative w-16 h-16 flex items-center justify-center mb-6 mx-auto"
-              style={{ 
-                backgroundColor: `${service.accentColor}15`,
-                border: `1px solid ${service.accentColor}40`
-              }}
-              animate={isFlipped ? { scale: 1.1 } : { scale: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <IconComponent 
-                size={28} 
-                style={{ color: service.accentColor }}
-              />
-            </motion.div>
-
-            {/* Content */}
-            <div className="relative text-center">
-              <h3 className="font-serif text-2xl text-cream mb-4 group-hover:text-gold transition-colors duration-300">
-                {service.title}
-              </h3>
-              <p className="font-body text-cream/60 leading-relaxed text-sm">
-                {service.description}
-              </p>
-            </div>
-
-            {/* Flip Hint */}
-            <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center gap-2 text-cream/40">
-              <Sparkles size={14} style={{ color: service.accentColor }} />
-              <span className="text-xs font-body tracking-wider uppercase">Hover to explore</span>
-              <Sparkles size={14} style={{ color: service.accentColor }} />
-            </div>
-
-            {/* Shimmer Effect */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 pointer-events-none"
-              initial={{ x: '-200%' }}
-              animate={isFlipped ? { x: '200%' } : { x: '-200%' }}
-              transition={{ duration: 0.8, ease: 'easeInOut' }}
-            />
           </div>
         </div>
 
@@ -159,39 +139,48 @@ const ServiceFlipCard = ({ service, index }) => {
           className="absolute inset-0 h-full w-full [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden"
         >
           <div 
-            className="relative h-full p-8 border bg-gradient-to-b from-night-light to-night"
+            className="relative h-full p-8 border bg-night-light flex flex-col justify-between"
             style={{ 
-              borderColor: `${service.accentColor}40`,
-              boxShadow: `inset 0 0 0 1px ${service.accentColor}20, 0 10px 40px -10px ${service.accentColor}30`
+              borderColor: `${accentColor}60`,
+              boxShadow: `0 20px 50px -10px ${accentColor}30`
             }}
           >
-            {/* Corner Decorations */}
+            {/* Background Texture */}
+            <div 
+              className="absolute inset-0 opacity-10"
+              style={{
+                backgroundImage: `radial-gradient(${accentColor} 1px, transparent 1px)`,
+                backgroundSize: '16px 16px'
+              }}
+            />
+
+            {/* Corner Borders */}
             <div 
               className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2"
-              style={{ borderColor: service.accentColor }}
+              style={{ borderColor: accentColor }}
             />
             <div 
               className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2"
-              style={{ borderColor: service.accentColor }}
+              style={{ borderColor: accentColor }}
             />
             <div 
               className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2"
-              style={{ borderColor: service.accentColor }}
+              style={{ borderColor: accentColor }}
             />
             <div 
               className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2"
-              style={{ borderColor: service.accentColor }}
+              style={{ borderColor: accentColor }}
             />
 
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
-              <Crown size={20} style={{ color: service.accentColor }} />
+              <Crown size={20} style={{ color: accentColor }} />
               <h3 className="font-serif text-xl text-cream">Features</h3>
             </div>
 
             {/* Features List with stagger animation */}
             <ul className="space-y-4">
-              {service.features.map((feature, idx) => (
+              {features.map((feature, idx) => (
                 <motion.li 
                   key={idx} 
                   className="flex items-center gap-3"
@@ -207,11 +196,11 @@ const ServiceFlipCard = ({ service, index }) => {
                   }}
                 >
                   <motion.div
-                    className="w-6 h-6 flex items-center justify-center rounded-full"
-                    style={{ backgroundColor: `${service.accentColor}20` }}
+                    className="w-6 h-6 flex items-center justify-center rounded-full shrink-0"
+                    style={{ backgroundColor: `${accentColor}20` }}
                     whileHover={{ scale: 1.2 }}
                   >
-                    <ArrowRight size={12} style={{ color: service.accentColor }} />
+                    <ArrowRight size={12} style={{ color: accentColor }} />
                   </motion.div>
                   <span className="font-body text-cream/80 text-sm">{feature}</span>
                 </motion.li>
@@ -220,7 +209,7 @@ const ServiceFlipCard = ({ service, index }) => {
 
             {/* CTA Button */}
             <motion.div 
-              className="absolute bottom-8 left-8 right-8"
+              className="pt-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ 
                 opacity: isFlipped ? 1 : 0, 
@@ -232,13 +221,12 @@ const ServiceFlipCard = ({ service, index }) => {
                 href="#contact"
                 className="group/btn relative flex items-center justify-between w-full px-5 py-3 overflow-hidden"
                 style={{
-                  background: `linear-gradient(135deg, ${service.accentColor}20, transparent)`,
-                  border: `1px solid ${service.accentColor}40`,
+                  background: `linear-gradient(135deg, ${accentColor}20, transparent)`,
+                  border: `1px solid ${accentColor}40`,
                 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {/* Button shimmer */}
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
                   initial={{ x: '-100%' }}
@@ -246,12 +234,12 @@ const ServiceFlipCard = ({ service, index }) => {
                   transition={{ duration: 0.5 }}
                 />
                 <span className="relative z-10 font-body text-sm text-cream tracking-wider">
-                  Book Now
+                  Book Appointment
                 </span>
                 <ArrowRight 
                   size={16} 
                   className="relative z-10 transition-transform duration-300 group-hover/btn:translate-x-1" 
-                  style={{ color: service.accentColor }}
+                  style={{ color: accentColor }}
                 />
               </motion.a>
             </motion.div>
@@ -264,6 +252,7 @@ const ServiceFlipCard = ({ service, index }) => {
 
 const ExperienceSection = () => {
   const sectionRef = useRef(null);
+  const { services, loading } = useAdmin();
 
   return (
     <section 
@@ -288,15 +277,25 @@ const ExperienceSection = () => {
         />
 
         {/* Service Cards with Flip Effect */}
-        <div className="mt-16 grid md:grid-cols-3 gap-8">
-          {services.map((service, index) => (
-            <ServiceFlipCard 
-              key={service.id} 
-              service={service} 
-              index={index}
-            />
-          ))}
-        </div>
+        {loading && services.length === 0 ? (
+          <div className="mt-16 text-center text-gold/60 font-body py-12">
+            Loading royal services from MongoDB Atlas...
+          </div>
+        ) : services.length === 0 ? (
+          <div className="mt-16 text-center text-cream/50 font-body py-12">
+            Showroom services will be announced shortly.
+          </div>
+        ) : (
+          <div className="mt-16 grid md:grid-cols-3 gap-8">
+            {services.map((service, index) => (
+              <ServiceFlipCard 
+                key={service.id || service._id || index} 
+                service={service} 
+                index={index}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

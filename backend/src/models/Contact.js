@@ -14,10 +14,16 @@ const contactSchema = new mongoose.Schema({
     lowercase: true,
     match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email']
   },
+  phone: {
+    type: String,
+    trim: true,
+    default: '',
+    maxlength: [30, 'Phone cannot exceed 30 characters']
+  },
   subject: {
     type: String,
-    required: [true, 'Subject is required'],
     trim: true,
+    default: 'General Inquiry',
     maxlength: [200, 'Subject cannot exceed 200 characters']
   },
   message: {
@@ -32,6 +38,13 @@ const contactSchema = new mongoose.Schema({
   replied: {
     type: Boolean,
     default: false
+  },
+  replyNotes: {
+    type: String,
+    default: ''
+  },
+  repliedAt: {
+    type: Date
   },
   createdAt: {
     type: Date,

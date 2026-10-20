@@ -8,15 +8,15 @@ const AddressSchema = new mongoose.Schema(
       enum: ["Home", "Office", "Village", "Other"],
       default: "Home",
     },
-    street: String,
-    city: String,
-    state: String,
-    pincode: String,
+    street: { type: String, default: "" },
+    city: { type: String, default: "Udaipur" },
+    state: { type: String, default: "Rajasthan" },
+    pincode: { type: String, default: "313001" },
     country: {
       type: String,
       default: "India",
     },
-    landmark: String,
+    landmark: { type: String, default: "" },
     isDefault: {
       type: Boolean,
       default: false,
@@ -44,33 +44,47 @@ const CartItemSchema = new mongoose.Schema(
 
 const MeasurementSchema = new mongoose.Schema(
   {
-    chest: String,
-    shoulder: String,
-    sleeveLength: String,
-    armHole: String,
-    frontNeck: String,
-    backNeck: String,
-    waist: String,
-    hips: String,
-    inseam: String,
-    thigh: String,
-    knee: String,
-    ankle: String,
-    outseam: String,
-    height: String,
-    weight: String,
-    notes: String,
+    chest: { type: String, default: "" },
+    shoulder: { type: String, default: "" },
+    sleeveLength: { type: String, default: "" },
+    armHole: { type: String, default: "" },
+    frontNeck: { type: String, default: "" },
+    backNeck: { type: String, default: "" },
+    waist: { type: String, default: "" },
+    hips: { type: String, default: "" },
+    inseam: { type: String, default: "" },
+    thigh: { type: String, default: "" },
+    knee: { type: String, default: "" },
+    ankle: { type: String, default: "" },
+    outseam: { type: String, default: "" },
+    height: { type: String, default: "" },
+    weight: { type: String, default: "" },
+    notes: { type: String, default: "" },
   },
   { _id: false }
 );
 
 const SizePreferenceSchema = new mongoose.Schema(
   {
-    shirtSize: String,
-    pantSize: String,
-    kurtaSize: String,
-    sherwaniSize: String,
-    lehengaSize: String,
+    shirtSize: { type: String, default: "" },
+    pantSize: { type: String, default: "" },
+    kurtaSize: { type: String, default: "" },
+    sherwaniSize: { type: String, default: "" },
+    lehengaSize: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
+const UserOrderSchema = new mongoose.Schema(
+  {
+    orderId: { type: String, default: "" },
+    items: { type: Array, default: [] },
+    total: { type: Number, default: 0 },
+    status: { type: String, default: "Order Placed" },
+    type: { type: String, default: "online" },
+    notes: { type: String, default: "" },
+    createdAt: { type: String, default: () => new Date().toISOString() },
+    deliveryAddress: { type: Object, default: {} }
   },
   { _id: false }
 );
@@ -104,8 +118,14 @@ const UserSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["customer", "admin"],
-      default: "customer",
+      enum: ["customer", "user", "admin", "owner", "manager", "cashier", "inventory"],
+      default: "user",
+    },
+
+    employeeId: {
+      type: String,
+      default: "",
+      trim: true,
     },
 
     provider: {
@@ -136,6 +156,17 @@ const UserSchema = new mongoose.Schema(
       default: true,
     },
 
+    deactivatedAt: {
+      type: Date,
+      default: null,
+    },
+
+    deactivatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
     lastLogin: Date,
 
     profile: {
@@ -147,11 +178,21 @@ const UserSchema = new mongoose.Schema(
       },
     },
 
+    address: {
+      street: { type: String, default: "" },
+      city: { type: String, default: "Udaipur" },
+      state: { type: String, default: "Rajasthan" },
+      pincode: { type: String, default: "313001" },
+      country: { type: String, default: "India" }
+    },
+
     addresses: [AddressSchema],
 
     measurements: MeasurementSchema,
 
     sizePreferences: SizePreferenceSchema,
+
+    orders: [UserOrderSchema],
 
     wishlist: [
       {
@@ -182,5 +223,41 @@ UserSchema.methods.comparePassword = async function (password) {
   if (!this.password) return false;
   return bcrypt.compare(password, this.password);
 };
+
+UserSchema.statics.findByEmail = function (email) {
+  if (!email) return null;
+  return this.findOne({ email: email.toLowerCase().trim() });
+};
+
+UserSchema.statics.getAll = function () {
+  return this.find().select("-password");
+};
+
+UserSchema.statics.update = function (id, data) {
+  return this.findByIdAndUpdate(id, data, { new: true, runValidators: true }).select("-password");
+};
+
+UserSchema.statics.addOrder = async function (userId, order) {
+  return this.findByIdAndUpdate(
+    userId,
+    { $push: { orders: order } },
+    { new: true }
+  );
+};
+
+UserSchema.virtual("id").get(function () {
+  return this._id.toHexString();
+});
+
+UserSchema.set("toJSON", {
+  virtuals: true,
+  transform: (doc, ret) => {
+    ret.id = ret._id.toString();
+    delete ret.password;
+    return ret;
+  }
+});
+
+UserSchema.set("toObject", { virtuals: true });
 
 module.exports = mongoose.model("User", UserSchema);
