@@ -7,12 +7,14 @@ import {
 } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useUser } from '../../context/UserContext';
+import { useSettings } from '../../context/SettingsContext';
 import { ordersAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const CheckoutModal = () => {
   const { cart, total, subtotal, securityDeposit, isCheckoutOpen, closeCheckout, clearCart } = useCart();
   const { user, isAuthenticated, createOrder } = useUser();
+  const { settings } = useSettings();
 
   const [step, setStep] = useState(1); // 1: Details, 2: Payment, 3: Confirmation
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,8 +106,9 @@ const CheckoutModal = () => {
           `*👑 RANAJI ROYAL SHOWROOM ORDER - #${orderNumber}*\n\n*Customer Details:*\n- Name: ${formData.name}\n- Phone: ${formData.phone}\n- Delivery: ${formData.deliveryType === 'showroom' ? 'Store Trial & Pickup (Surajpole, Udaipur)' : `${formData.street}, ${formData.city} - ${formData.pincode}`}\n\n*Order Items:*\n${orderSummary}\n\n*Security Deposit:* ₹${securityDeposit.toLocaleString('en-IN')}\n*Grand Total:* ₹${total.toLocaleString('en-IN')}\n*Fitting Notes:* ${formData.fittingNotes || 'Standard'}\n\nPlease confirm availability and booking.`
         );
 
+        const waNum = (settings?.whatsappNumber || '919876543210').replace(/[^0-9]/g, '');
         setTimeout(() => {
-          window.open(`https://wa.me/919876543210?text=${message}`, '_blank');
+          window.open(`https://wa.me/${waNum}?text=${message}`, '_blank');
         }, 800);
       }
     } catch (error) {

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Category = require("../models/Category");
-const { optionalAuth } = require("../middleware/auth");
+const { authenticate, requireManagerOrOwner } = require("../middleware/auth");
 
 // Get all categories
 router.get("/", async (req, res) => {
@@ -91,8 +91,8 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Create category
-router.post("/", optionalAuth, async (req, res) => {
+// Create category (Manager/Owner only)
+router.post("/", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const slug = (req.body.slug || req.body.name || `cat-${Date.now()}`)
       .toLowerCase()
@@ -116,8 +116,8 @@ router.post("/", optionalAuth, async (req, res) => {
   }
 });
 
-// Update category
-router.put("/:id", optionalAuth, async (req, res) => {
+// Update category (Manager/Owner only)
+router.put("/:id", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -143,8 +143,8 @@ router.put("/:id", optionalAuth, async (req, res) => {
   }
 });
 
-// Delete category
-router.delete("/:id", optionalAuth, async (req, res) => {
+// Delete category (Manager/Owner only)
+router.delete("/:id", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const category = await Category.findByIdAndDelete(req.params.id);
 

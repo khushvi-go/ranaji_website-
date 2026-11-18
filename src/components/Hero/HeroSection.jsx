@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ChevronDown, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import GoldButton from '../UI/GoldButton';
 import GoldParticles from './GoldParticles';
 import JaliBackground from './JaliBackground';
@@ -10,6 +11,7 @@ import { useMouseParallax } from '../../hooks/useMouseParallax';
 const HeroSection = () => {
   const headlineRef = useRef(null);
   const { ref: parallaxRef, position } = useMouseParallax(15);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // GSAP SplitText-like animation for headline
@@ -34,16 +36,23 @@ const HeroSection = () => {
   const scrollToSection = (id) => {
     const element = document.querySelector(id);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      if (window.__lenis) {
+        window.__lenis.scrollTo(element, { offset: -80, duration: 1.2 });
+      } else {
+        const top = element.getBoundingClientRect().top + window.pageYOffset - 80;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      }
     }
   };
 
   return (
     <section 
-      id="hero" 
+      id="home" 
       ref={parallaxRef}
       className="relative min-h-screen flex items-center justify-center overflow-hidden bg-night"
     >
+      {/* Anchor alias for backwards compatibility */}
+      <div id="hero" className="absolute -top-24 pointer-events-none" />
       {/* Background Layers */}
       <div className="absolute inset-0 bg-dark-gradient" />
       <JaliBackground />
@@ -104,13 +113,13 @@ const HeroSection = () => {
               transition={{ duration: 0.6, delay: 1.2 }}
               className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
-              <GoldButton onClick={() => scrollToSection('#collections')}>
+              <GoldButton onClick={() => navigate('/collections')}>
                 <span className="flex items-center gap-2">
                   Explore Collection
                   <ArrowRight size={18} />
                 </span>
               </GoldButton>
-              <GoldButton variant="secondary" onClick={() => scrollToSection('#contact')}>
+              <GoldButton variant="secondary" onClick={() => navigate('/contact')}>
                 Book a Fitting
               </GoldButton>
             </motion.div>

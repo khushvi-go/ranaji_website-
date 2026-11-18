@@ -9,6 +9,11 @@ import {
   contactsAPI,
   dashboardAPI
 } from '../services/api';
+import { 
+  fallbackServices, 
+  fallbackTestimonials, 
+  fallbackGallery 
+} from '../data/initialShowcaseData';
 
 const AdminContext = createContext();
 
@@ -27,9 +32,9 @@ export const AdminProvider = ({ children }) => {
   
   // Data states
   const [collections, setCollections] = useState([]);
-  const [testimonials, setTestimonials] = useState([]);
-  const [gallery, setGallery] = useState([]);
-  const [services, setServices] = useState([]);
+  const [testimonials, setTestimonials] = useState(fallbackTestimonials);
+  const [gallery, setGallery] = useState(fallbackGallery);
+  const [services, setServices] = useState(fallbackServices);
   const [bookings, setBookings] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [serverStats, setServerStats] = useState(null);
@@ -44,10 +49,15 @@ export const AdminProvider = ({ children }) => {
         servicesAPI.getAll('?active=true'),
       ]);
       
-      setCollections(Array.isArray(collectionsRes) ? collectionsRes : collectionsRes.data || []);
-      setTestimonials(Array.isArray(testimonialsRes) ? testimonialsRes : testimonialsRes.data || []);
-      setGallery(Array.isArray(galleryRes) ? galleryRes : galleryRes.data || []);
-      setServices(Array.isArray(servicesRes) ? servicesRes : servicesRes.data || []);
+      const loadedCols = Array.isArray(collectionsRes) ? collectionsRes : collectionsRes.data || [];
+      const loadedTests = Array.isArray(testimonialsRes) ? testimonialsRes : testimonialsRes.data || [];
+      const loadedGal = Array.isArray(galleryRes) ? galleryRes : galleryRes.data || [];
+      const loadedServs = Array.isArray(servicesRes) ? servicesRes : servicesRes.data || [];
+
+      setCollections(loadedCols);
+      setTestimonials(loadedTests.length > 0 ? loadedTests : fallbackTestimonials);
+      setGallery(loadedGal.length > 0 ? loadedGal : fallbackGallery);
+      setServices(loadedServs.length > 0 ? loadedServs : fallbackServices);
     } catch (error) {
       console.error('Error fetching public showcase data from MongoDB Atlas:', error);
     }

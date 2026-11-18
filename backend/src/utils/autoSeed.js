@@ -481,20 +481,22 @@ async function autoSeedDatabase() {
       console.log(`✅ Seeded ${initialCustomers.length} initial showroom clients.`);
     }
 
-    // 7. Ensure Default Admin exists
-    const adminEmail = "admin@ranaji.com";
-    const existingAdmin = await User.findOne({ email: adminEmail });
-    if (!existingAdmin) {
+    // 7. Ensure at least one Admin or Owner exists
+    const anyAdmin = await User.findOne({ role: { $in: ["admin", "owner"] } });
+    if (!anyAdmin) {
+      const adminEmail = process.env.ADMIN_EMAIL || "admin@ranaji.com";
+      const adminPassword = process.env.ADMIN_PASSWORD || "ChangeMe123!";
       const admin = new User({
-        name: "Ranaji Admin",
-        email: adminEmail,
-        password: "ChangeMe123!",
+        name: "Ranaji Showroom Administrator",
+        email: adminEmail.toLowerCase().trim(),
+        password: adminPassword,
         role: "admin",
         provider: "local",
         emailVerified: true,
+        isActive: true
       });
       await admin.save();
-      console.log(`✅ Default admin created: ${adminEmail} (password: ChangeMe123!)`);
+      console.log(`✅ Initial showroom administrator provisioned: ${adminEmail}`);
     }
 
   } catch (error) {

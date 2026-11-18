@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const Contact = require("../models/Contact");
-const { optionalAuth } = require("../middleware/auth");
+const { authenticate, requireManagerOrOwner } = require("../middleware/auth");
 
-// GET all contacts
-router.get("/", optionalAuth, async (req, res) => {
+// GET all contacts (Manager and Owner only)
+router.get("/", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const { read, replied } = req.query;
     let query = {};
@@ -38,8 +38,8 @@ router.get("/", optionalAuth, async (req, res) => {
   }
 });
 
-// GET contact stats
-router.get("/stats/overview", optionalAuth, async (req, res) => {
+// GET contact stats (Manager and Owner only)
+router.get("/stats/overview", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const total = await Contact.countDocuments();
     const unread = await Contact.countDocuments({ read: false });
@@ -56,8 +56,8 @@ router.get("/stats/overview", optionalAuth, async (req, res) => {
   }
 });
 
-// GET single contact
-router.get("/:id", optionalAuth, async (req, res) => {
+// GET single contact (Manager and Owner only)
+router.get("/:id", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const contact = await Contact.findById(req.params.id);
     if (!contact) {
@@ -134,8 +134,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-// PUT update contact (e.g. general update / status)
-router.put("/:id", optionalAuth, async (req, res) => {
+// PUT update contact (Manager and Owner only)
+router.put("/:id", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const updateData = { ...req.body };
     const contact = await Contact.findByIdAndUpdate(
@@ -160,8 +160,8 @@ router.put("/:id", optionalAuth, async (req, res) => {
   }
 });
 
-// PUT mark as read / unread
-router.put("/:id/read", optionalAuth, async (req, res) => {
+// PUT mark as read / unread (Manager and Owner only)
+router.put("/:id/read", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const read = req.body.read !== undefined ? Boolean(req.body.read) : true;
     const contact = await Contact.findByIdAndUpdate(
@@ -186,8 +186,8 @@ router.put("/:id/read", optionalAuth, async (req, res) => {
   }
 });
 
-// PUT mark as replied
-router.put("/:id/reply", optionalAuth, async (req, res) => {
+// PUT mark as replied (Manager and Owner only)
+router.put("/:id/reply", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const replyNotes = (req.body.replyNotes || req.body.notes || "").trim();
     const updateFields = {
@@ -221,8 +221,8 @@ router.put("/:id/reply", optionalAuth, async (req, res) => {
   }
 });
 
-// DELETE contact
-router.delete("/:id", optionalAuth, async (req, res) => {
+// DELETE contact (Manager and Owner only)
+router.delete("/:id", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const contact = await Contact.findByIdAndDelete(req.params.id);
     if (!contact) {

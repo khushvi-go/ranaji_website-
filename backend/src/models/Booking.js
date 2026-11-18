@@ -16,13 +16,15 @@ const bookingSchema = new mongoose.Schema({
   occasion: {
     type: String,
     required: [true, 'Occasion is required'],
-    enum: ['wedding', 'engagement', 'baarat', 'other'],
+    enum: ['wedding', 'engagement', 'baarat', 'sangeet', 'reception', 'festival', 'other'],
+    default: 'wedding',
     lowercase: true
   },
   lookingFor: {
     type: String,
     required: [true, 'Looking for is required'],
-    enum: ['purchase', 'rental', 'both'],
+    enum: ['purchase', 'rental', 'both', 'tailoring', 'custom', 'styling', 'other'],
+    default: 'both',
     lowercase: true
   },
   date: {

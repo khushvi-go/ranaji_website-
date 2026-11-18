@@ -8,7 +8,7 @@ import {
   Star, CheckCircle, Clock, XCircle, Quote
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
-import { ordersAPI, testimonialsAPI } from '../../services/api';
+import { ordersAPI, userAPI, testimonialsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const UserProfile = () => {
@@ -63,12 +63,10 @@ const UserProfile = () => {
       if (!user) return;
       setLoadingOrders(true);
       try {
-        const queryParams = new URLSearchParams();
-        if (user._id || user.id) queryParams.append('user', user._id || user.id);
-        if (user.email) queryParams.append('email', user.email);
-        if (user.phone) queryParams.append('phone', user.phone);
-        const res = await ordersAPI.getAll(`?${queryParams.toString()}`);
-        if (res && res.data && res.data.length > 0) {
+        const res = await userAPI.getOrders();
+        if (res && res.orders && res.orders.length > 0) {
+          setDbOrders(res.orders);
+        } else if (res && res.data && res.data.length > 0) {
           setDbOrders(res.data);
         } else if (Array.isArray(user.orders) && user.orders.length > 0) {
           setDbOrders(user.orders);
@@ -683,21 +681,31 @@ const UserProfile = () => {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-12 space-y-4">
-                      <Package size={48} className="text-gold/40 mx-auto" />
-                      <div>
-                        <p className="text-cream font-serif text-lg">No Royal Orders Yet</p>
-                        <p className="text-cream/50 text-xs max-w-sm mx-auto mt-1">
-                          Browse our wedding sherwanis and bridal poshaks for rent or purchase.
+                    <div className="text-center py-16 px-6 bg-cream/5 border border-gold/15 rounded-2xl max-w-lg mx-auto space-y-4">
+                      <div className="w-16 h-16 mx-auto rounded-full bg-gold/10 border border-gold/25 flex items-center justify-center text-gold/60">
+                        <Package size={32} />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-cream font-serif text-lg font-medium">No Royal Orders Yet</p>
+                        <p className="text-cream/50 text-xs font-body max-w-sm mx-auto leading-relaxed">
+                          Your wardrobe journey awaits. Explore our wedding sherwanis and bridal poshaks for rent or purchase, or book a private fitting trial in Udaipur.
                         </p>
                       </div>
-                      <Link
-                        to="/shop"
-                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-gold text-night font-body text-xs font-semibold hover:bg-gold/90 transition-colors"
-                      >
-                        Explore Royal Collection
-                        <ChevronRight size={14} />
-                      </Link>
+                      <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                        <Link
+                          to="/shop"
+                          className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-gold text-night font-body text-xs font-bold uppercase tracking-wider hover:bg-copper transition-all shadow-md"
+                        >
+                          Explore Collection
+                          <ChevronRight size={13} />
+                        </Link>
+                        <Link
+                          to="/custom-order"
+                          className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl border border-gold/30 text-cream font-body text-xs font-medium hover:border-gold hover:text-gold transition-colors"
+                        >
+                          Custom Order
+                        </Link>
+                      </div>
                     </div>
                   )}
                 </div>

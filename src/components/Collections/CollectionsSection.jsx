@@ -180,18 +180,35 @@ const CollectionsSection = () => {
           </div>
 
           {filteredCollections.length === 0 ? (
-            <div className="text-center py-16 bg-night-light/50 rounded-2xl border border-gold/20">
-              <p className="text-cream/60 font-serif">No royal items match this filter combination.</p>
-              <button
-                onClick={() => {
-                  setActiveCategory('all');
-                  setActiveSubcategory('all');
-                  setAvailabilityMode('all');
-                }}
-                className="mt-3 text-gold text-xs underline"
-              >
-                Reset filters
-              </button>
+            <div className="text-center py-16 px-6 bg-night-light/50 rounded-2xl border border-gold/20 max-w-xl mx-auto space-y-4">
+              <div className="w-14 h-14 mx-auto rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center text-gold">
+                <Crown size={24} />
+              </div>
+              <div className="space-y-1">
+                <p className="text-cream font-serif text-lg font-medium">No Royal Ensembles In This Selection</p>
+                <p className="text-cream/50 font-body text-xs leading-relaxed">
+                  No garments currently match the selected style or rental filter. Clear your filters or explore our full Udaipur showroom catalog.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setActiveCategory('all');
+                    setActiveSubcategory('all');
+                    setAvailabilityMode('all');
+                  }}
+                  className="px-5 py-2 bg-gold text-night font-body text-xs font-bold tracking-wider uppercase rounded-xl hover:bg-copper transition-all shadow-md"
+                >
+                  Reset Filters
+                </button>
+                <Link
+                  to="/shop"
+                  className="px-5 py-2 border border-gold/30 text-cream/80 hover:text-gold hover:border-gold font-body text-xs tracking-wider uppercase rounded-xl transition-all inline-flex items-center gap-1.5"
+                >
+                  View All Garments
+                  <ArrowRight size={13} />
+                </Link>
+              </div>
             </div>
           ) : (
             <Swiper

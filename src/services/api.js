@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Helper function for API calls
 const fetchWithAuth = async (endpoint, options = {}) => {
@@ -25,6 +25,26 @@ const fetchWithAuth = async (endpoint, options = {}) => {
     const data = await response.json();
     
     if (!response.ok) {
+      // Clear token only if server explicitly rejects token validity/expiration/revocation
+      if (response.status === 401 && token) {
+        const msg = (data.message || '').toLowerCase();
+        const isAuthCredentialFailure = 
+          msg.includes('invalid or expired token') ||
+          msg.includes('invalid token') ||
+          msg.includes('token expired') ||
+          msg.includes('jwt expired') ||
+          msg.includes('access revoked') ||
+          msg.includes('user not found');
+
+        if (isAuthCredentialFailure) {
+          if (localStorage.getItem('ranaji-admin-token')) {
+            localStorage.removeItem('ranaji-admin-token');
+          } else {
+            localStorage.removeItem('ranaji-user-token');
+          }
+        }
+      }
+
       throw new Error(data.message || 'Something went wrong');
     }
     
@@ -324,6 +344,7 @@ export const auditLogsAPI = {
 // Showroom Settings & Security Policies API
 export const settingsAPI = {
   get: () => fetchWithAuth('/settings'),
+  getPublic: () => fetchWithAuth('/settings/public'),
   update: (data) => fetchWithAuth('/settings', {
     method: 'PUT',
     body: JSON.stringify(data),

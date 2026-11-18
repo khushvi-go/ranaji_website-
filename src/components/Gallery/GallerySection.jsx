@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Crown, Sparkles } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Crown, Sparkles, Camera, Calendar } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import SectionHeading from '../UI/SectionHeading';
 import { useAdmin } from '../../context/AdminContext';
 
@@ -99,12 +100,40 @@ const GallerySection = () => {
 
         {/* Loading and Empty States */}
         {loading && gallery.length === 0 ? (
-          <div className="mt-16 text-center text-gold/60 font-body py-12">
-            Loading royal lookbook gallery from MongoDB Atlas...
+          <div className="mt-16 text-center text-gold/60 font-body py-12 flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm">Loading royal lookbook gallery from MongoDB Atlas...</p>
           </div>
         ) : filteredImages.length === 0 ? (
-          <div className="mt-16 text-center text-cream/50 font-body py-12">
-            No images in this category yet. Check back soon for new royal photo showcases.
+          <div className="mt-16 text-center py-16 px-6 bg-night-light/40 border border-gold/20 rounded-2xl max-w-2xl mx-auto space-y-4">
+            <div className="w-16 h-16 mx-auto rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center text-gold">
+              <Camera size={28} />
+            </div>
+            <div className="space-y-1">
+              <h4 className="font-serif text-xl text-cream">Royal Lookbook Being Curated</h4>
+              <p className="text-cream/60 text-xs font-body max-w-md mx-auto leading-relaxed">
+                {activeCategory !== 'all'
+                  ? `New royal wedding portraits for the ${activeCategory} lookbook are being photographed at Udaipur palaces. Explore all lookbooks or schedule a personal consultation.`
+                  : 'Our royal lookbook portraits are currently being updated with this wedding season’s newest bespoke creations.'}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              {activeCategory !== 'all' && (
+                <button
+                  onClick={() => setActiveCategory('all')}
+                  className="px-5 py-2.5 bg-gold text-night font-body text-xs font-bold tracking-wider uppercase rounded-xl hover:bg-copper transition-all"
+                >
+                  View All Categories
+                </button>
+              )}
+              <Link
+                to="/contact"
+                className="px-5 py-2.5 border border-gold/40 text-cream font-body text-xs font-bold tracking-wider uppercase rounded-xl hover:bg-gold/10 hover:border-gold transition-all inline-flex items-center gap-1.5"
+              >
+                <Calendar size={13} className="text-gold" />
+                <span>Book Showroom Visit</span>
+              </Link>
+            </div>
           </div>
         ) : (
           /* Bento Grid */

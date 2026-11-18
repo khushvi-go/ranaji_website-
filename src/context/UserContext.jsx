@@ -33,12 +33,19 @@ export const UserProvider = ({ children }) => {
       if (response.valid) {
         setUser(response.user);
         setIsAuthenticated(true);
+        return { success: true, user: response.user };
       } else {
         localStorage.removeItem('ranaji-user-token');
+        setUser(null);
+        setIsAuthenticated(false);
+        return { success: false };
       }
     } catch (error) {
       console.error('Token verification failed:', error);
       localStorage.removeItem('ranaji-user-token');
+      setUser(null);
+      setIsAuthenticated(false);
+      return { success: false, error };
     } finally {
       setLoading(false);
     }
@@ -173,6 +180,8 @@ export const UserProvider = ({ children }) => {
     user,
     isAuthenticated,
     loading,
+    verifyToken,
+    refreshAuth: verifyToken,
     login,
     logout,
     register,

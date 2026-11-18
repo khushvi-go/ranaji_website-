@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Crown, ArrowRight, UserPlus } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
+import { API_URL } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const UserLogin = () => {
@@ -77,7 +78,7 @@ const UserLogin = () => {
           <button
             type="button"
             onClick={() =>
-              window.location.href = "http://localhost:5000/api/users/google"
+              window.location.href = `${API_URL}/users/google`
             }
             className="w-full flex items-center justify-center gap-3 border border-[#DEA044] rounded-lg py-3 mb-5 hover:bg-[#DEA044]/10 transition"
           >

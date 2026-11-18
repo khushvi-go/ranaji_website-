@@ -20,7 +20,11 @@ import {
   ShieldCheck,
   ScrollText,
   ShieldAlert,
-  UserCog
+  UserCog,
+  SlidersHorizontal,
+  BarChart3,
+  Shirt,
+  Truck
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 
@@ -35,25 +39,36 @@ const AdminLayout = () => {
     navigate('/admin/login');
   };
 
+  const currentRole = role || (adminUser?.role === 'admin' ? 'owner' : (adminUser?.role || 'owner'));
+
   const allMenuItems = [
-    { path: '/admin', icon: LayoutDashboard, label: 'Overview', exact: true, roles: ['owner', 'admin', 'manager'] },
-    { path: '/admin/pos', icon: Receipt, label: 'Point of Sale (POS)', counterBadge: 'COUNTER', roles: ['owner', 'admin', 'manager', 'cashier'] },
+    { 
+      path: '/admin', 
+      icon: LayoutDashboard, 
+      label: currentRole === 'cashier' ? 'Cashier POS Hub' : currentRole === 'inventory' ? 'Inventory Stock Hub' : currentRole === 'manager' ? 'Operations Hub' : 'Executive Overview', 
+      exact: true, 
+      roles: ['owner', 'admin', 'manager', 'cashier', 'inventory'] 
+    },
+    { path: '/admin/pos', icon: Receipt, label: 'POS / Billing', counterBadge: 'COUNTER', roles: ['owner', 'admin', 'manager', 'cashier'] },
     { path: '/admin/sales', icon: Receipt, label: 'Sales & Invoices', roles: ['owner', 'admin', 'manager', 'cashier'] },
+    { path: '/admin/orders', icon: Truck, label: 'Online Orders', roles: ['owner', 'admin', 'manager'] },
     { path: '/admin/inventory', icon: Package, label: 'Garment Inventory', roles: ['owner', 'admin', 'manager', 'inventory'] },
     { path: '/admin/customers', icon: Users, label: 'Showroom Clients', roles: ['owner', 'admin', 'manager', 'cashier'] },
-    { path: '/admin/approvals', icon: ShieldCheck, label: 'Approvals', roles: ['owner', 'admin', 'manager', 'cashier', 'inventory'] },
-    { path: '/admin/staff', icon: UserCog, label: 'Staff & Security', roles: ['owner', 'admin'] },
-    { path: '/admin/audit-logs', icon: ScrollText, label: 'Audit Trail', roles: ['owner', 'admin', 'manager'] },
-    { path: '/admin/collections', icon: ShoppingBag, label: 'Garment Outfits', roles: ['owner', 'admin', 'manager', 'inventory'] },
+    { path: '/admin/rentals', icon: Shirt, label: 'Rentals', roles: ['owner', 'admin', 'manager', 'cashier'] },
+    { path: '/admin/bookings', icon: Calendar, label: 'Appointments', badge: stats.pendingBookings, roles: ['owner', 'admin', 'manager'] },
+    { path: '/admin/collections', icon: ShoppingBag, label: 'Outfits & Catalog', roles: ['owner', 'admin', 'manager', 'inventory'] },
     { path: '/admin/categories', icon: Tags, label: 'Categories', roles: ['owner', 'admin', 'manager', 'inventory'] },
-    { path: '/admin/testimonials', icon: MessageSquare, label: 'Testimonials', badge: stats.pendingTestimonials, roles: ['owner', 'admin', 'manager'] },
     { path: '/admin/gallery', icon: Image, label: 'Showcase Gallery', roles: ['owner', 'admin', 'manager'] },
     { path: '/admin/services', icon: Briefcase, label: 'Royal Services', roles: ['owner', 'admin', 'manager'] },
-    { path: '/admin/bookings', icon: Calendar, label: 'Bookings', badge: stats.pendingBookings, roles: ['owner', 'admin', 'manager'] },
-    { path: '/admin/contacts', icon: Mail, label: 'Inquiries', badge: stats.unreadContacts, roles: ['owner', 'admin', 'manager'] },
+    { path: '/admin/testimonials', icon: MessageSquare, label: 'Testimonials', badge: stats.pendingTestimonials, roles: ['owner', 'admin', 'manager'] },
+    { path: '/admin/contacts', icon: Mail, label: 'Enquiries', badge: stats.unreadContacts, roles: ['owner', 'admin', 'manager'] },
+    { path: '/admin/approvals', icon: ShieldCheck, label: 'Approvals Queue', roles: ['owner', 'admin', 'manager', 'cashier', 'inventory'] },
+    { path: '/admin/reports', icon: BarChart3, label: 'Reports & Analytics', roles: ['owner', 'admin', 'manager'] },
+    { path: '/admin/staff', icon: UserCog, label: 'Staff & Identity', roles: ['owner', 'admin'] },
+    { path: '/admin/settings', icon: SlidersHorizontal, label: 'Business Settings', roles: ['owner', 'admin'] },
+    { path: '/admin/audit-logs', icon: ScrollText, label: 'Audit Trail', roles: ['owner', 'admin', 'manager'] },
   ];
 
-  const currentRole = role || (adminUser?.role === 'admin' ? 'owner' : (adminUser?.role || 'owner'));
   const menuItems = allMenuItems.filter((item) => item.roles.includes(currentRole));
 
   return (
@@ -81,7 +96,9 @@ const AdminLayout = () => {
                   className="overflow-hidden"
                 >
                   <h1 className="font-display text-xl text-cream tracking-wider">RANAJI</h1>
-                  <p className="text-xs text-cream/50 font-body">Admin Panel</p>
+                  <p className="text-[10px] text-gold font-body uppercase tracking-wider font-bold">
+                    {currentRole === 'owner' || currentRole === 'admin' ? 'Owner Dashboard' : `Staff: ${currentRole.toUpperCase()}`}
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>

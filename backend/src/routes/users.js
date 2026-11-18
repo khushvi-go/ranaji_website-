@@ -6,6 +6,7 @@ const User = require("../models/User");
 const Order = require("../models/Order");
 const { authenticate, requireAdmin } = require("../middleware/auth");
 const passport = require("passport");
+require("../config/passport");
 
 // Register new user
 router.post("/register", async (req, res) => {
@@ -81,10 +82,16 @@ router.get(
   "/google/callback",
   passport.authenticate("google", {
     session: false,
-    failureRedirect: "/login"
+    failureRedirect: "/login?error=auth_failed"
   }),
   async (req, res) => {
     try {
+      if (!req.user || req.user.isActive === false) {
+        return res.redirect(
+          `${process.env.CLIENT_URL || "http://localhost:5173"}/login?error=account_deactivated`
+        );
+      }
+
       const token = jwt.sign(
         {
           id: req.user._id,

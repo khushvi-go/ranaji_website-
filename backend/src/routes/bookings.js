@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const Booking = require("../models/Booking");
-const { optionalAuth } = require("../middleware/auth");
+const { authenticate, requireStaff } = require("../middleware/auth");
 
-// GET all bookings
-router.get("/", optionalAuth, async (req, res) => {
+// GET all bookings (Showroom staff only)
+router.get("/", authenticate, requireStaff, async (req, res) => {
   try {
     const { status } = req.query;
     let query = {};
@@ -33,8 +33,8 @@ router.get("/", optionalAuth, async (req, res) => {
   }
 });
 
-// GET stats overview
-router.get("/stats/overview", optionalAuth, async (req, res) => {
+// GET stats overview (Showroom staff only)
+router.get("/stats/overview", authenticate, requireStaff, async (req, res) => {
   try {
     const total = await Booking.countDocuments();
     const pending = await Booking.countDocuments({ status: "pending" });
@@ -51,8 +51,8 @@ router.get("/stats/overview", optionalAuth, async (req, res) => {
   }
 });
 
-// GET single booking
-router.get("/:id", optionalAuth, async (req, res) => {
+// GET single booking (Showroom staff only)
+router.get("/:id", authenticate, requireStaff, async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
     if (!booking) {
@@ -74,11 +74,23 @@ router.get("/:id", optionalAuth, async (req, res) => {
 // POST new booking (public appointment booking)
 router.post("/", async (req, res) => {
   try {
+    const rawOccasion = (req.body.occasion || "wedding").toLowerCase();
+    const validOccasions = ['wedding', 'engagement', 'baarat', 'sangeet', 'reception', 'festival', 'other'];
+    const occasion = validOccasions.includes(rawOccasion) ? rawOccasion : 'wedding';
+
+    const rawLookingFor = (req.body.lookingFor || "both").toLowerCase();
+    let lookingFor = 'both';
+    if (rawLookingFor.includes('rent')) lookingFor = 'rental';
+    else if (rawLookingFor.includes('tailor')) lookingFor = 'tailoring';
+    else if (rawLookingFor.includes('custom') || rawLookingFor.includes('poshak')) lookingFor = 'custom';
+    else if (rawLookingFor.includes('style') || rawLookingFor.includes('saafa') || rawLookingFor.includes('group')) lookingFor = 'styling';
+    else if (rawLookingFor.includes('buy') || rawLookingFor.includes('purchas')) lookingFor = 'purchase';
+
     const booking = await Booking.create({
       name: req.body.name,
       phone: req.body.phone,
-      occasion: req.body.occasion || "wedding",
-      lookingFor: req.body.lookingFor || "both",
+      occasion,
+      lookingFor,
       date: req.body.date ? new Date(req.body.date) : new Date(),
       message: req.body.message || "",
       status: "pending"
@@ -100,8 +112,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-// PUT update booking
-router.put("/:id", optionalAuth, async (req, res) => {
+// PUT update booking (Showroom staff only)
+router.put("/:id", authenticate, requireStaff, async (req, res) => {
   try {
     const booking = await Booking.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -123,8 +135,8 @@ router.put("/:id", optionalAuth, async (req, res) => {
   }
 });
 
-// DELETE booking
-router.delete("/:id", optionalAuth, async (req, res) => {
+// DELETE booking (Showroom staff only)
+router.delete("/:id", authenticate, requireStaff, async (req, res) => {
   try {
     const booking = await Booking.findByIdAndDelete(req.params.id);
     if (!booking) {

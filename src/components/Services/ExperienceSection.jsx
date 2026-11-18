@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Shirt, Ruler, Users, ArrowRight, Crown, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import SectionHeading from '../UI/SectionHeading';
 import { useAdmin } from '../../context/AdminContext';
 
@@ -217,21 +218,16 @@ const ServiceFlipCard = ({ service, index }) => {
               }}
               transition={{ duration: 0.4, delay: isFlipped ? 0.6 : 0 }}
             >
-              <motion.a
-                href="#contact"
-                className="group/btn relative flex items-center justify-between w-full px-5 py-3 overflow-hidden"
+              <Link
+                to="/contact"
+                className="group/btn relative flex items-center justify-between w-full px-5 py-3 overflow-hidden rounded-lg"
                 style={{
                   background: `linear-gradient(135deg, ${accentColor}20, transparent)`,
                   border: `1px solid ${accentColor}40`,
                 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
               >
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                  initial={{ x: '-100%' }}
-                  whileHover={{ x: '100%' }}
-                  transition={{ duration: 0.5 }}
+                <div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:translate-x-full transition-transform duration-700"
                 />
                 <span className="relative z-10 font-body text-sm text-cream tracking-wider">
                   Book Appointment
@@ -241,7 +237,7 @@ const ServiceFlipCard = ({ service, index }) => {
                   className="relative z-10 transition-transform duration-300 group-hover/btn:translate-x-1" 
                   style={{ color: accentColor }}
                 />
-              </motion.a>
+              </Link>
             </motion.div>
           </div>
         </div>

@@ -7,10 +7,10 @@ const InventoryMovement = require("../models/InventoryMovement");
 const Settings = require("../models/Settings");
 const ApprovalRequest = require("../models/ApprovalRequest");
 const AuditLog = require("../models/AuditLog");
-const { authenticate, optionalAuth, requireStaff, requireManagerOrOwner } = require("../middleware/auth");
+const { authenticate, optionalAuth, requireStaff, requireCashierStaff, requireManagerOrOwner } = require("../middleware/auth");
 
 // GET next invoice number
-router.get("/next-invoice", async (req, res) => {
+router.get("/next-invoice", authenticate, requireStaff, async (req, res) => {
   try {
     const count = await Sale.countDocuments();
     const year = new Date().getFullYear();
@@ -22,8 +22,8 @@ router.get("/next-invoice", async (req, res) => {
   }
 });
 
-// GET all sales
-router.get("/", optionalAuth, async (req, res) => {
+// GET all sales (Showroom staff only)
+router.get("/", authenticate, requireStaff, async (req, res) => {
   try {
     const { startDate, endDate, customerId, status } = req.query;
     let query = {};
@@ -67,8 +67,8 @@ router.get("/", optionalAuth, async (req, res) => {
   }
 });
 
-// GET single sale
-router.get("/:id", optionalAuth, async (req, res) => {
+// GET single sale (Showroom staff only)
+router.get("/:id", authenticate, requireStaff, async (req, res) => {
   try {
     let sale = null;
     if (req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
@@ -96,24 +96,31 @@ router.get("/:id", optionalAuth, async (req, res) => {
 });
 
 // POST record sale with atomic stock deduction, discount authority check, and customer link
-router.post("/", optionalAuth, async (req, res) => {
+router.post("/", authenticate, requireCashierStaff, async (req, res) => {
   try {
-    // RBAC: If user is authenticated, disallow inventory-only staff and customers from billing
-    if (req.user && ['customer', 'user', 'inventory'].includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: `Role [${req.user.role}] is not authorized to create counter sales invoices.`
-      });
-    }
-
     const {
       invoiceNumber: reqInvoiceNum,
+      idempotencyKey: reqIdempotencyKey,
       cashier: customCashier,
       register,
       notes,
       approvalCode,
       approvalId
     } = req.body;
+
+    const idempotencyKey = req.headers['idempotency-key'] || reqIdempotencyKey || null;
+
+    if (idempotencyKey) {
+      const existingByIdempotency = await Sale.findOne({ idempotencyKey });
+      if (existingByIdempotency) {
+        return res.status(200).json({
+          success: true,
+          message: "Duplicate billing prevented by idempotency key. Existing invoice returned.",
+          sale: existingByIdempotency,
+          data: existingByIdempotency
+        });
+      }
+    }
 
     const rawItems = req.body.items || [];
     if (!Array.isArray(rawItems) || rawItems.length === 0) {
@@ -260,9 +267,20 @@ router.post("/", optionalAuth, async (req, res) => {
       invoiceNumber = `RNJ-${year}-${String(count + 1).padStart(4, "0")}`;
     }
 
-    // Ensure unique invoice number
+    // Ensure unique invoice number and prevent duplicate billing replays
     let existingSale = await Sale.findOne({ invoiceNumber });
     if (existingSale) {
+      const timeDiff = Date.now() - new Date(existingSale.createdAt).getTime();
+      const grandTotal = calculation?.grandTotal || 0;
+      if (timeDiff < 60000 && Math.abs((existingSale.calculation?.grandTotal || 0) - grandTotal) < 1) {
+        // Idempotency: Return the existing sale instead of double-billing and double-deducting stock
+        return res.status(200).json({
+          success: true,
+          message: "Duplicate billing prevented. Existing invoice returned.",
+          sale: existingSale,
+          data: existingSale
+        });
+      }
       invoiceNumber = `RNJ-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`;
     }
 
@@ -351,6 +369,7 @@ router.post("/", optionalAuth, async (req, res) => {
     // Save Sale to MongoDB Atlas
     const sale = await Sale.create({
       invoiceNumber,
+      idempotencyKey: idempotencyKey || undefined,
       date: new Date(),
       customer: customerRef,
       items,
@@ -394,6 +413,23 @@ router.post("/", optionalAuth, async (req, res) => {
       data: saleData
     });
   } catch (err) {
+    if (err.code === 11000) {
+      // Handle race condition on duplicate key collision (idempotencyKey or invoiceNumber)
+      const duplicateField = Object.keys(err.keyPattern || {})[0] || 'invoiceNumber';
+      const duplicateVal = err.keyValue ? err.keyValue[duplicateField] : null;
+      let existingDuplicate = null;
+      if (duplicateVal) {
+        existingDuplicate = await Sale.findOne({ [duplicateField]: duplicateVal });
+      }
+      if (existingDuplicate) {
+        return res.status(200).json({
+          success: true,
+          message: "Duplicate billing prevented (concurrent submission caught). Existing invoice returned.",
+          sale: existingDuplicate,
+          data: existingDuplicate
+        });
+      }
+    }
     console.error("Record sale error:", err);
     res.status(400).json({ success: false, message: err.message });
   }

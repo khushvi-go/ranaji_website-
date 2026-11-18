@@ -7,8 +7,8 @@ const ApprovalRequest = require("../models/ApprovalRequest");
 const AuditLog = require("../models/AuditLog");
 const { authenticate, optionalAuth, requireStaff, requireInventoryStaff } = require("../middleware/auth");
 
-// GET all inventory movements (Staff only)
-router.get("/", optionalAuth, async (req, res) => {
+// GET all inventory movements (Showroom staff only)
+router.get("/", authenticate, requireStaff, async (req, res) => {
   try {
     const { limit = 100, type } = req.query;
     let query = {};

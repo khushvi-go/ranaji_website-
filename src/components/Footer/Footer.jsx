@@ -1,28 +1,33 @@
 import { motion } from 'framer-motion';
 import { Instagram, Facebook, Phone, Mail, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Logo from '../UI/Logo';
+import { useSettings } from '../../context/SettingsContext';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { settings } = useSettings();
+
+  const cleanWaNumber = (settings?.whatsappNumber || '919876543210').replace(/[^0-9]/g, '');
+  const displayPhone = settings?.phone || '+91 98765 43210';
+  const telHref = `tel:${displayPhone.replace(/\s+/g, '')}`;
+  const displayEmail = settings?.customerServiceEmail || settings?.email || 'info@ranajiudaipur.com';
+  const displayAddress = settings?.address || '24/451, 1st Floor, Near Udaipur Suzuki Bike Showroom, Sec-5, Surajpole, Udaipur – 313001';
+  const instagramUrl = settings?.instagramUrl || 'https://www.instagram.com/ranaji_udaipur';
+  const facebookUrl = settings?.facebookUrl || 'https://www.facebook.com/share/18PhEG4c3J/';
 
   const quickLinks = [
-    { name: 'Home', href: '#hero' },
-    { name: 'Collections', href: '#collections' },
-    { name: 'About Us', href: '#about' },
-    { name: 'Services', href: '#services' },
-    { name: 'Gallery', href: '#gallery' },
-    { name: 'Contact', href: '#contact' },
+    { name: 'Home', path: '/' },
+    { name: 'Royal Shop', path: '/shop' },
+    { name: 'Collections', path: '/collections' },
+    { name: 'Services', path: '/services' },
+    { name: 'Legacy', path: '/legacy' },
+    { name: 'Gallery', path: '/gallery' },
+    { name: 'Contact', path: '/contact' },
   ];
 
-  const scrollToSection = (href) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
-    <footer className="bg-night border-t border-gold/10">
+    <footer className="bg-night border-t border-gold/15">
       {/* Main Footer */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
@@ -34,21 +39,23 @@ const Footer = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <div className="flex items-center gap-3 mb-4">
+              <Link to="/" className="flex items-center gap-3 mb-4 group inline-flex">
                 <Logo size="medium" />
-                <p className="font-display text-cream text-lg tracking-wider">RANAJI</p>
-              </div>
-              <p className="font-body text-cream/60 text-sm mt-4 leading-relaxed">
-                An Exclusive Royal Wedding Showroom. Dress like the Kings of Mewar.
+                <p className="font-display text-cream text-lg tracking-wider group-hover:text-gold transition-colors">
+                  {settings?.showroomName ? settings.showroomName.toUpperCase() : 'RANAJI'}
+                </p>
+              </Link>
+              <p className="font-body text-cream/60 text-sm mt-3 leading-relaxed">
+                {settings?.tagline || 'An Exclusive Royal Wedding Showroom. Dress like the Kings and Queens of Mewar.'}
               </p>
               
               {/* Social Icons */}
               <div className="flex gap-4 mt-6">
                 <motion.a
-                  href="https://www.instagram.com/ranaji_udaipur"
+                  href={instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 border border-gold/30 flex items-center justify-center text-gold hover:bg-gold hover:text-night transition-all"
+                  className="w-10 h-10 rounded-lg border border-gold/30 flex items-center justify-center text-gold hover:bg-gold hover:text-night transition-all"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   aria-label="Follow us on Instagram"
@@ -56,10 +63,10 @@ const Footer = () => {
                   <Instagram size={18} />
                 </motion.a>
                 <motion.a
-                  href="https://www.facebook.com/share/18PhEG4c3J/"
+                  href={facebookUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 border border-gold/30 flex items-center justify-center text-gold hover:bg-gold hover:text-night transition-all"
+                  className="w-10 h-10 rounded-lg border border-gold/30 flex items-center justify-center text-gold hover:bg-gold hover:text-night transition-all"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   aria-label="Follow us on Facebook"
@@ -67,10 +74,10 @@ const Footer = () => {
                   <Facebook size={18} />
                 </motion.a>
                 <motion.a
-                  href="https://wa.me/919876543210"
+                  href={`https://wa.me/${cleanWaNumber}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 border border-gold/30 flex items-center justify-center text-gold hover:bg-gold hover:text-night transition-all"
+                  className="w-10 h-10 rounded-lg border border-gold/30 flex items-center justify-center text-gold hover:bg-gold hover:text-night transition-all"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   aria-label="Chat with us on WhatsApp"
@@ -89,17 +96,20 @@ const Footer = () => {
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
             >
-              <h4 className="font-serif text-lg text-cream mb-6">Quick Links</h4>
+              <h4 className="font-serif text-lg text-cream mb-6 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+                <span>Showroom Pages</span>
+              </h4>
               <ul className="space-y-3">
                 {quickLinks.map((link) => (
                   <li key={link.name}>
-                    <a
-                      href={link.href}
-                      onClick={(e) => { e.preventDefault(); scrollToSection(link.href); }}
-                      className="font-body text-cream/60 hover:text-gold transition-colors text-sm"
+                    <Link
+                      to={link.path}
+                      className="font-body text-cream/70 hover:text-gold transition-colors text-sm flex items-center gap-2 group"
                     >
-                      {link.name}
-                    </a>
+                      <span className="w-1 h-1 bg-gold/40 group-hover:bg-gold rounded-full transition-colors" />
+                      <span>{link.name}</span>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -114,31 +124,33 @@ const Footer = () => {
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
             >
-              <h4 className="font-serif text-lg text-cream mb-6">Contact Us</h4>
+              <h4 className="font-serif text-lg text-cream mb-6 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+                <span>Udaipur Showroom</span>
+              </h4>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
-                  <MapPin size={18} className="text-gold shrink-0 mt-1" />
-                  <span className="font-body text-cream/60 text-sm">
-                    24/451, 1st Floor, Near Udaipur Suzuki Bike Showroom, 
-                    Sec-5, Surajpole, Udaipur – 313001
+                  <MapPin size={18} className="text-gold shrink-0 mt-0.5" />
+                  <span className="font-body text-cream/60 text-sm leading-relaxed">
+                    {displayAddress}
                   </span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Phone size={18} className="text-gold shrink-0" />
                   <a 
-                    href="tel:+919876543210"
+                    href={telHref}
                     className="font-body text-cream/60 hover:text-gold transition-colors text-sm"
                   >
-                    +91 98765 43210
+                    {displayPhone}
                   </a>
                 </li>
                 <li className="flex items-center gap-3">
                   <Mail size={18} className="text-gold shrink-0" />
                   <a 
-                    href="mailto:info@ranajiudaipur.com"
-                    className="font-body text-cream/60 hover:text-gold transition-colors text-sm"
+                    href={`mailto:${displayEmail}`}
+                    className="font-body text-cream/60 hover:text-gold transition-colors text-sm break-all"
                   >
-                    info@ranajiudaipur.com
+                    {displayEmail}
                   </a>
                 </li>
               </ul>
@@ -152,16 +164,16 @@ const Footer = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
-              className="text-center md:text-left"
+              className="text-left"
             >
-              <p className="font-devanagari text-gold/40 text-3xl">अतिथि देवो भव</p>
-              <p className="font-body text-cream/40 text-sm mt-2 tracking-wider">
+              <p className="font-devanagari text-gold/60 text-3xl">अतिथि देवो भव</p>
+              <p className="font-serif text-cream/80 text-sm mt-2 tracking-widest uppercase">
                 The Guest is God
               </p>
-              <p className="font-body text-cream/30 text-xs mt-4 leading-relaxed">
-                At Ranaji, we believe in the ancient Indian philosophy of treating 
-                every guest with the utmost respect and care. Your royal experience 
-                is our highest priority.
+              <p className="font-body text-cream/50 text-xs mt-4 leading-relaxed">
+                At Ranaji, we believe in the timeless Mewari royal tradition of dressing 
+                every bride and groom with regal honor. Your royal wedding coronation 
+                is our highest devotion.
               </p>
             </motion.div>
           </div>
@@ -173,8 +185,8 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Copyright */}
-            <p className="font-body text-cream/40 text-sm text-center md:text-left">
-              © {currentYear} Ranaji – An Exclusive Royal Wedding Showroom, Udaipur. 
+            <p className="font-body text-cream/40 text-xs text-center md:text-left">
+              © {currentYear} {settings?.showroomName || 'Ranaji'} – An Exclusive Royal Wedding Showroom, Udaipur. 
               All rights reserved.
             </p>
 
@@ -186,23 +198,24 @@ const Footer = () => {
             </div>
 
             {/* Made With Love */}
-            <p className="font-body text-cream/40 text-sm">
-              Made with <span className="text-crimson">♥</span> in Mewar
+            <p className="font-body text-cream/40 text-xs">
+              Handcrafted with <span className="text-crimson">♥</span> in Udaipur, Mewar
             </p>
           </div>
         </div>
       </div>
 
-      {/* Mobile WhatsApp Button */}
+      {/* Mobile WhatsApp Floating Button */}
       <motion.a
-        href="https://wa.me/919876543210"
+        href={`https://wa.me/${cleanWaNumber}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 lg:hidden w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg"
+        className="fixed bottom-6 right-6 z-40 lg:hidden w-13 h-13 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-2xl p-3 border-2 border-white/20"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
+        aria-label="Direct WhatsApp Consultation"
       >
-        <Phone size={24} className="text-white" />
+        <Phone size={22} fill="white" />
       </motion.a>
     </footer>
   );

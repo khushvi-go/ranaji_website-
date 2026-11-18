@@ -32,6 +32,7 @@ const approvalRoutes = require('./routes/approvals');
 const session = require('express-session');
 const passport = require('passport');
 require('./config/passport');
+const { authenticate, requireStaff } = require('./middleware/auth');
 
 // Initialize app
 const app = express();
@@ -92,8 +93,8 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
 app.use('/api/approvals', approvalRoutes);
 
-// Real Dashboard Statistics Endpoint queried directly from MongoDB Atlas
-app.get('/api/dashboard/stats', async (req, res) => {
+// Real Dashboard Statistics Endpoint queried directly from MongoDB Atlas (Protected: Showroom Staff & Admin only)
+app.get('/api/dashboard/stats', authenticate, requireStaff, async (req, res) => {
   try {
     const Product = require('./models/product');
     const Sale = require('./models/Sale');
@@ -199,7 +200,12 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     await connectDB();
-    await autoSeedDatabase();
+    if (process.env.AUTO_SEED === 'true') {
+      console.log("ℹ️ AUTO_SEED is enabled. Verifying initial database fixtures...");
+      await autoSeedDatabase();
+    } else {
+      console.log("ℹ️ Auto-seeding skipped on startup (set AUTO_SEED=true to seed initial demo catalog).");
+    }
 
     app.listen(PORT, () => {
       console.log(`

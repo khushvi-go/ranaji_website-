@@ -16,9 +16,11 @@ import {
 import SectionHeading from '../UI/SectionHeading';
 import GoldButton from '../UI/GoldButton';
 import { contactsAPI, bookingsAPI } from '../../services/api';
+import { useSettings } from '../../context/SettingsContext';
 import toast from 'react-hot-toast';
 
 const ContactSection = () => {
+  const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState('inquiry'); // 'inquiry' or 'booking'
 
   // State for Contact / Inquiry Form
@@ -116,7 +118,8 @@ const ContactSection = () => {
       `${data.message ? `\n💬 *Message:*\n${data.message}` : ''}`
     );
     
-    const whatsappUrl = `https://wa.me/919876543210?text=${message}`;
+    const cleanWaNumber = (settings.whatsappNumber || '919876543210').replace(/[^0-9]/g, '');
+    const whatsappUrl = `https://wa.me/${cleanWaNumber}?text=${message}`;
     
     try {
       await bookingsAPI.create({
@@ -150,24 +153,24 @@ const ContactSection = () => {
     {
       icon: MapPin,
       title: 'Visit Us',
-      content: '24/451, 1st Floor, Near Udaipur Suzuki Bike Showroom, Sec-5, Surajpole, Udaipur – 313001'
+      content: settings.address || '24/451, 1st Floor, Near Udaipur Suzuki Bike Showroom, Sec-5, Surajpole, Udaipur – 313001'
     },
     {
       icon: Phone,
       title: 'Call Us',
-      content: '+91 98765 43210',
-      href: 'tel:+919876543210'
+      content: settings.phone || '+91 98765 43210',
+      href: `tel:${(settings.phone || '+919876543210').replace(/\s+/g, '')}`
     },
     {
       icon: Mail,
       title: 'Email Us',
-      content: 'contact@ranajiwedding.com',
-      href: 'mailto:contact@ranajiwedding.com'
+      content: settings.customerServiceEmail || settings.email || 'contact@ranaji.com',
+      href: `mailto:${settings.customerServiceEmail || settings.email || 'contact@ranaji.com'}`
     },
     {
       icon: Clock,
       title: 'Opening Hours',
-      content: 'Mon – Sun: 10:00 AM – 9:00 PM'
+      content: settings.openingHours || 'Mon – Sun: 10:00 AM – 9:00 PM'
     }
   ];
 
@@ -540,7 +543,7 @@ const ContactSection = () => {
 
             {/* Map */}
             <motion.a
-              href="https://maps.app.goo.gl/X6WTs63sTx9NGqje9"
+              href={settings.googleMapsUrl || "https://maps.app.goo.gl/X6WTs63sTx9NGqje9"}
               target="_blank"
               rel="noopener noreferrer"
               className="relative aspect-video bg-cream/5 border border-gold/15 rounded-xl overflow-hidden block group shadow-lg"
@@ -566,7 +569,7 @@ const ContactSection = () => {
 
             {/* WhatsApp Direct Chat CTA */}
             <motion.a
-              href="https://wa.me/919876543210?text=Hello%20Ranaji,%20I%20would%20like%20to%20inquire%20about%20your%20wedding%20collection."
+              href={`https://wa.me/${(settings.whatsappNumber || '919876543210').replace(/[^0-9]/g, '')}?text=Hello%20Ranaji,%20I%20would%20like%20to%20inquire%20about%20your%20wedding%20collection.`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-3 w-full py-3.5 bg-[#25D366] text-white font-body font-medium tracking-wide rounded-xl hover:bg-[#128C7E] transition-colors shadow-lg shadow-emerald-950/20 text-sm"
@@ -574,7 +577,7 @@ const ContactSection = () => {
               whileTap={{ scale: 0.99 }}
             >
               <MessageCircle size={20} />
-              Instant WhatsApp Consultation (+91 98765 43210)
+              Instant WhatsApp Consultation ({settings.phone || '+91 98765 43210'})
             </motion.a>
           </motion.div>
         </div>

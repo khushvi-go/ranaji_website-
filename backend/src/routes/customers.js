@@ -51,8 +51,8 @@ router.get("/export", authenticate, requireManagerOrOwner, async (req, res) => {
   }
 });
 
-// GET all customers (Staff or authorized caller)
-router.get("/", optionalAuth, async (req, res) => {
+// GET all customers (Showroom staff only)
+router.get("/", authenticate, requireStaff, async (req, res) => {
   try {
     const { search } = req.query;
     let query = {};
@@ -95,8 +95,8 @@ router.get("/", optionalAuth, async (req, res) => {
   }
 });
 
-// GET single customer
-router.get("/:id", optionalAuth, async (req, res) => {
+// GET single customer (Showroom staff only)
+router.get("/:id", authenticate, requireStaff, async (req, res) => {
   try {
     let customer = null;
     if (req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
@@ -123,8 +123,8 @@ router.get("/:id", optionalAuth, async (req, res) => {
   }
 });
 
-// CREATE customer (Staff or online customer registration)
-router.post("/", optionalAuth, async (req, res) => {
+// CREATE customer (Showroom staff only)
+router.post("/", authenticate, requireStaff, async (req, res) => {
   try {
     const { name, phone, email, city, address, measurements, notes } = req.body;
 

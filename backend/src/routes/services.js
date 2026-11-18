@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Service = require("../models/Service");
-const { optionalAuth } = require("../middleware/auth");
+const { authenticate, requireManagerOrOwner } = require("../middleware/auth");
 
 // GET all services (public)
 router.get("/", async (req, res) => {
@@ -51,8 +51,8 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// POST new service
-router.post("/", optionalAuth, async (req, res) => {
+// POST new service (Manager/Owner only)
+router.post("/", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const service = await Service.create(req.body);
     res.status(201).json({
@@ -68,8 +68,8 @@ router.post("/", optionalAuth, async (req, res) => {
   }
 });
 
-// PUT update service
-router.put("/:id", optionalAuth, async (req, res) => {
+// PUT update service (Manager/Owner only)
+router.put("/:id", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const service = await Service.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -91,8 +91,8 @@ router.put("/:id", optionalAuth, async (req, res) => {
   }
 });
 
-// DELETE service
-router.delete("/:id", optionalAuth, async (req, res) => {
+// DELETE service (Manager/Owner only)
+router.delete("/:id", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const service = await Service.findByIdAndDelete(req.params.id);
     if (!service) {

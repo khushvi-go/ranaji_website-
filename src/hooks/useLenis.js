@@ -21,6 +21,7 @@ export const useLenis = () => {
     });
 
     lenisRef.current = lenis;
+    window.__lenis = lenis;
 
     // Integrate with GSAP ScrollTrigger
     lenis.on('scroll', ScrollTrigger.update);
@@ -50,6 +51,7 @@ export const useLenis = () => {
     document.addEventListener('click', handleAnchorClick);
 
     return () => {
+      window.__lenis = null;
       document.removeEventListener('click', handleAnchorClick);
       lenis.destroy();
       gsap.ticker.remove((time) => {

@@ -9,6 +9,13 @@ const SaleSchema = new mongoose.Schema(
       trim: true,
       index: true
     },
+    idempotencyKey: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      index: true
+    },
     date: {
       type: Date,
       default: Date.now,

@@ -3,26 +3,33 @@ const router = express.Router();
 const Testimonial = require("../models/Testimonial");
 const { optionalAuth, authenticate, requireStaff } = require("../middleware/auth");
 
-// GET all testimonials (public, user-specific, or admin)
+const STAFF_ROLES = ["admin", "owner", "manager", "cashier", "inventory"];
+
+// GET all testimonials (public, user-specific, or staff moderation)
 router.get("/", optionalAuth, async (req, res) => {
   try {
+    const isStaff = req.user && STAFF_ROLES.includes(req.user.role);
     const { active, status, user, my } = req.query;
     let query = {};
 
-    if (active === "true") {
-      // Public site: Only approved and active testimonials
-      query = {
-        status: "approved",
-        isActive: { $ne: false }
-      };
-    } else if (status) {
-      query.status = status;
-    }
-
-    if (user) {
-      query.user = user;
-    } else if (my === "true" && req.user) {
-      query.user = req.user._id;
+    if (isStaff) {
+      // Showroom staff moderation: full directory access with optional filtering
+      if (status) query.status = status;
+      if (active === "true") query.isActive = true;
+      if (user) query.user = user;
+      if (my === "true") query.user = req.user._id;
+    } else {
+      // Public / customer callers:
+      if (my === "true" && req.user) {
+        // Authenticated customer viewing their own submissions
+        query.user = req.user._id;
+      } else {
+        // Public showcase: strictly enforce approved & active records only
+        query = {
+          status: "approved",
+          isActive: { $ne: false }
+        };
+      }
     }
 
     const testimonials = await Testimonial.find(query)
@@ -31,6 +38,28 @@ router.get("/", optionalAuth, async (req, res) => {
 
     const formatted = testimonials.map((t) => {
       const derivedStatus = t.status || (t.isActive ? "approved" : "pending");
+      const isOwner = req.user && t.user && (
+        (t.user._id && t.user._id.toString() === req.user._id.toString()) ||
+        (t.user.toString() === req.user._id.toString())
+      );
+      const canViewPrivateFields = isStaff || isOwner;
+
+      // Privacy protection: redact email & phone for public visitors
+      let sanitizedUser = null;
+      if (t.user) {
+        sanitizedUser = {
+          id: t.user._id ? t.user._id.toString() : t.user.toString(),
+          _id: t.user._id ? t.user._id.toString() : t.user.toString(),
+          name: t.user.name || t.name,
+          avatar: t.user.avatar || t.avatar || ""
+        };
+        if (canViewPrivateFields) {
+          sanitizedUser.email = t.user.email;
+          sanitizedUser.phone = t.user.phone;
+          sanitizedUser.role = t.user.role;
+        }
+      }
+
       return {
         id: t._id.toString(),
         _id: t._id.toString(),
@@ -43,14 +72,7 @@ router.get("/", optionalAuth, async (req, res) => {
         avatar: t.avatar || (t.name ? t.name.split(" ").filter(Boolean).map(n => n[0]).join("").toUpperCase().slice(0, 2) : "RP"),
         status: derivedStatus,
         isActive: derivedStatus === "approved" && t.isActive !== false,
-        user: t.user ? {
-          id: t.user._id.toString(),
-          _id: t.user._id.toString(),
-          name: t.user.name,
-          email: t.user.email,
-          phone: t.user.phone,
-          role: t.user.role
-        } : null,
+        user: sanitizedUser,
         userId: t.user ? (t.user._id ? t.user._id.toString() : t.user.toString()) : null,
         createdAt: t.createdAt,
         updatedAt: t.updatedAt
@@ -63,14 +85,43 @@ router.get("/", optionalAuth, async (req, res) => {
   }
 });
 
-// GET single testimonial (public)
-router.get("/:id", async (req, res) => {
+// GET single testimonial (public with privacy protection, or staff moderation)
+router.get("/:id", optionalAuth, async (req, res) => {
   try {
+    const isStaff = req.user && STAFF_ROLES.includes(req.user.role);
     const testimonial = await Testimonial.findById(req.params.id).populate("user", "name email phone avatar role");
     if (!testimonial) {
       return res.status(404).json({ success: false, message: "Testimonial not found" });
     }
+
     const derivedStatus = testimonial.status || (testimonial.isActive ? "approved" : "pending");
+    const isApproved = derivedStatus === "approved" && testimonial.isActive !== false;
+    const isOwner = req.user && testimonial.user && (
+      (testimonial.user._id && testimonial.user._id.toString() === req.user._id.toString()) ||
+      (testimonial.user.toString() === req.user._id.toString())
+    );
+
+    // If unapproved and caller is neither staff nor author, return 404
+    if (!isApproved && !isStaff && !isOwner) {
+      return res.status(404).json({ success: false, message: "Testimonial not found" });
+    }
+
+    const canViewPrivateFields = isStaff || isOwner;
+    let sanitizedUser = null;
+    if (testimonial.user) {
+      sanitizedUser = {
+        id: testimonial.user._id ? testimonial.user._id.toString() : testimonial.user.toString(),
+        _id: testimonial.user._id ? testimonial.user._id.toString() : testimonial.user.toString(),
+        name: testimonial.user.name || testimonial.name,
+        avatar: testimonial.user.avatar || testimonial.avatar || ""
+      };
+      if (canViewPrivateFields) {
+        sanitizedUser.email = testimonial.user.email;
+        sanitizedUser.phone = testimonial.user.phone;
+        sanitizedUser.role = testimonial.user.role;
+      }
+    }
+
     res.json({
       success: true,
       data: {
@@ -78,15 +129,8 @@ router.get("/:id", async (req, res) => {
         _id: testimonial._id.toString(),
         ...testimonial.toObject(),
         status: derivedStatus,
-        isActive: derivedStatus === "approved" && testimonial.isActive !== false,
-        user: testimonial.user ? {
-          id: testimonial.user._id.toString(),
-          _id: testimonial.user._id.toString(),
-          name: testimonial.user.name,
-          email: testimonial.user.email,
-          phone: testimonial.user.phone,
-          role: testimonial.user.role
-        } : null,
+        isActive: isApproved,
+        user: sanitizedUser,
         userId: testimonial.user ? (testimonial.user._id ? testimonial.user._id.toString() : testimonial.user.toString()) : null
       }
     });

@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const Rental = require("../models/Rental");
-const { optionalAuth } = require("../middleware/auth");
+const { authenticate, requireStaff, requireCashierStaff } = require("../middleware/auth");
 
-// GET all rentals
-router.get("/", optionalAuth, async (req, res) => {
+// GET all rentals (Showroom staff only)
+router.get("/", authenticate, requireStaff, async (req, res) => {
   try {
     const { status } = req.query;
     let query = {};
@@ -38,8 +38,8 @@ router.get("/", optionalAuth, async (req, res) => {
   }
 });
 
-// POST new rental
-router.post("/", optionalAuth, async (req, res) => {
+// POST new rental (Cashier, Manager, Owner)
+router.post("/", authenticate, requireCashierStaff, async (req, res) => {
   try {
     const count = await Rental.countDocuments();
     const year = new Date().getFullYear();
@@ -61,50 +61,44 @@ router.post("/", optionalAuth, async (req, res) => {
       }
     ];
 
-    const startDate = req.body.startDate || req.body.rentalStartDate || new Date();
-    const returnDateExpected = req.body.returnDateExpected || req.body.rentalEndDate || new Date(Date.now() + 3 * 86400000);
+    const totalRentalFee = items.reduce(
+      (sum, item) => sum + (Number(item.rentPrice) || 0) * (Number(item.quantity) || 1),
+      0
+    );
 
-    let status = req.body.status || "RESERVED";
-    if (typeof status === "string") {
-      const upper = status.toUpperCase();
-      if (["RESERVED", "DISPATCHED", "RETURNED", "OVERDUE", "CANCELLED"].includes(upper)) {
-        status = upper;
-      } else {
-        status = "RESERVED";
-      }
-    }
+    const securityDeposit = req.body.securityDeposit !== undefined
+      ? Number(req.body.securityDeposit)
+      : Math.round(totalRentalFee * 0.5);
 
     const rental = await Rental.create({
       rentalNumber,
       customer,
       items,
-      startDate,
-      returnDateExpected,
-      securityDeposit: Number(req.body.securityDeposit) || 0,
-      totalRentalFee: Number(req.body.totalRentalFee || req.body.rentPrice) || 0,
-      status,
-      returnNotes: req.body.returnNotes || ""
+      startDate: req.body.startDate ? new Date(req.body.startDate) : new Date(),
+      returnDateExpected: req.body.returnDateExpected
+        ? new Date(req.body.returnDateExpected)
+        : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // Default 3 days rental
+      securityDeposit,
+      totalRentalFee,
+      status: "ACTIVE",
+      returnNotes: req.body.notes || ""
     });
-
-    const rentalData = {
-      id: rental._id.toString(),
-      _id: rental._id.toString(),
-      rentalNumber: rental.rentalNumber,
-      ...rental.toObject()
-    };
 
     res.status(201).json({
       success: true,
-      data: rentalData,
-      rental: rentalData
+      data: {
+        id: rental._id.toString(),
+        _id: rental._id.toString(),
+        ...rental.toObject()
+      }
     });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
 });
 
-// PUT update rental status
-router.put("/:id/status", optionalAuth, async (req, res) => {
+// PUT update rental status (Showroom staff only)
+router.put("/:id/status", authenticate, requireStaff, async (req, res) => {
   try {
     const { status, returnNotes } = req.body;
     const update = { status };

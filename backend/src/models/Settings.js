@@ -41,6 +41,41 @@ const settingsSchema = new mongoose.Schema({
     default: 'https://maps.google.com/?q=Surajpole+Udaipur',
     trim: true
   },
+  gstNumber: {
+    type: String,
+    default: '08AAAAA0000A1Z5',
+    trim: true
+  },
+  stateCode: {
+    type: String,
+    default: '08',
+    trim: true
+  },
+  invoicePrefix: {
+    type: String,
+    default: 'RNJ',
+    trim: true
+  },
+  invoiceNotes: {
+    type: String,
+    default: 'All royal ensembles are handcrafted in Udaipur. Retain this invoice for trial fittings and authorized exchanges.',
+    trim: true
+  },
+  customerServiceEmail: {
+    type: String,
+    default: 'contact@ranaji.com',
+    trim: true
+  },
+  instagramUrl: {
+    type: String,
+    default: 'https://www.instagram.com/ranaji_udaipur',
+    trim: true
+  },
+  facebookUrl: {
+    type: String,
+    default: 'https://www.facebook.com/share/18PhEG4c3J/',
+    trim: true
+  },
   maxCashierDiscountPercent: {
     type: Number,
     default: 10,

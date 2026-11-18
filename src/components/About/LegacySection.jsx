@@ -62,10 +62,12 @@ const LegacySection = () => {
 
   return (
     <section 
-      id="about" 
+      id="legacy" 
       ref={sectionRef}
-      className="relative py-24 md:py-32 bg-night overflow-hidden"
+      className="relative py-24 md:py-32 bg-night overflow-hidden border-t border-gold/10"
     >
+      {/* Anchor alias for backwards compatibility */}
+      <div id="about" className="absolute -top-24 pointer-events-none" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-5 gap-12 lg:gap-20 items-center">
           

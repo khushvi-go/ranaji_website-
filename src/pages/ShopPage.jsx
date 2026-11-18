@@ -2,9 +2,9 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Filter, X, Search, SlidersHorizontal, Crown, 
-  Sparkles, Calendar, ChevronDown, Check, ArrowLeft 
+  Sparkles, Calendar, ChevronDown, Check, ArrowLeft, MessageCircle 
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navigation/Navbar';
 import Footer from '../components/Footer/Footer';
 import CollectionCard from '../components/Collections/CollectionCard';
@@ -37,10 +37,18 @@ const ShopPage = () => {
   const [sortBy, setSortBy] = useState('featured');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-  // Scroll to top on mount
+  const location = useLocation();
+
+  // Scroll to top on mount and read query parameters if any
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    const params = new URLSearchParams(location.search);
+    const cat = params.get('category');
+    if (cat) {
+      setSelectedCategory(cat);
+      setSelectedSubcategory('all');
+    }
+  }, [location.search]);
 
   // When category changes, reset subcategory to 'all'
   const handleCategoryChange = (catId) => {
@@ -427,21 +435,63 @@ const ShopPage = () => {
             {/* Products Grid */}
             <div className="lg:col-span-3">
               {filteredProducts.length === 0 ? (
-                <div className="text-center py-20 bg-night-light/40 rounded-2xl border border-gold/20 p-8 space-y-4">
-                  <div className="w-16 h-16 mx-auto rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center text-gold">
-                    <Crown size={28} />
+                products.length === 0 ? (
+                  <div className="text-center py-20 bg-night-light/40 rounded-2xl border border-gold/20 p-8 space-y-6">
+                    <div className="w-20 h-20 mx-auto rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center text-gold shadow-lg shadow-gold/5">
+                      <Crown size={36} />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="font-devanagari text-gold/60 text-lg">राजपूती शान एवं परम्परा</p>
+                      <h3 className="font-serif text-2xl md:text-3xl text-cream font-medium">The Royal Showcase is Being Curated</h3>
+                      <p className="text-cream/60 text-sm font-body max-w-lg mx-auto leading-relaxed">
+                        Our master artisans in Udaipur are handcrafting authentic Mewari sherwanis, jodhpurs, and royal poshaks for this season's wedding celebrations. Schedule a private trial fitting or speak directly with our showroom concierge.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                      <a
+                        href="/#contact"
+                        className="px-6 py-3 bg-gold text-night font-body text-xs font-bold tracking-wider uppercase rounded-xl hover:bg-copper transition-all shadow-md inline-flex items-center gap-2"
+                      >
+                        <Calendar size={14} />
+                        Book Showroom Fitting
+                      </a>
+                      <Link
+                        to="/custom-order"
+                        className="px-6 py-3 border border-gold/40 text-cream font-body text-xs font-bold tracking-wider uppercase rounded-xl hover:bg-gold/10 hover:border-gold transition-all inline-flex items-center gap-2"
+                      >
+                        <Sparkles size={14} className="text-gold" />
+                        Custom Tailoring Request
+                      </Link>
+                    </div>
                   </div>
-                  <h3 className="font-serif text-2xl text-cream font-medium">No Royal Ensembles Found</h3>
-                  <p className="text-cream/60 text-xs font-body max-w-md mx-auto leading-relaxed">
-                    We could not find items matching your active filter criteria. Try clearing filters or exploring another category.
-                  </p>
-                  <button
-                    onClick={clearAllFilters}
-                    className="px-6 py-2.5 bg-gold text-night font-body text-xs font-bold tracking-wider uppercase rounded-xl hover:bg-copper transition-all shadow-md"
-                  >
-                    Reset All Filters
-                  </button>
-                </div>
+                ) : (
+                  <div className="text-center py-20 bg-night-light/40 rounded-2xl border border-gold/20 p-8 space-y-5">
+                    <div className="w-16 h-16 mx-auto rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center text-gold">
+                      <Crown size={28} />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-serif text-2xl text-cream font-medium">No Matching Royal Ensembles</h3>
+                      <p className="text-cream/60 text-xs font-body max-w-md mx-auto leading-relaxed">
+                        We could not find items matching your active filter criteria ({selectedCategory !== 'all' ? selectedCategory : 'all styles'}, {selectedPriceRange !== 'all' ? selectedPriceRange : 'any price'}). Try resetting your filters or consult our showroom concierge.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                      <button
+                        onClick={clearAllFilters}
+                        className="px-6 py-2.5 bg-gold text-night font-body text-xs font-bold tracking-wider uppercase rounded-xl hover:bg-copper transition-all shadow-md"
+                      >
+                        Reset All Filters
+                      </button>
+                      <a
+                        href="/#contact"
+                        className="px-5 py-2.5 border border-gold/30 text-cream/80 hover:text-gold hover:border-gold font-body text-xs tracking-wider uppercase rounded-xl transition-all inline-flex items-center gap-1.5"
+                      >
+                        <MessageCircle size={13} className="text-gold" />
+                        Contact Stylist
+                      </a>
+                    </div>
+                  </div>
+                )
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredProducts.map((item) => (

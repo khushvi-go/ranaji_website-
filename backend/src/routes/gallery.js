@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Gallery = require("../models/Gallery");
-const { optionalAuth } = require("../middleware/auth");
+const { authenticate, requireManagerOrOwner } = require("../middleware/auth");
 
 // GET all gallery images (public)
 router.get("/", async (req, res) => {
@@ -51,8 +51,8 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// POST new image
-router.post("/", optionalAuth, async (req, res) => {
+// POST new image (Manager/Owner only)
+router.post("/", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const image = await Gallery.create(req.body);
     res.status(201).json({
@@ -68,8 +68,8 @@ router.post("/", optionalAuth, async (req, res) => {
   }
 });
 
-// PUT update image
-router.put("/:id", optionalAuth, async (req, res) => {
+// PUT update image (Manager/Owner only)
+router.put("/:id", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const image = await Gallery.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -91,8 +91,8 @@ router.put("/:id", optionalAuth, async (req, res) => {
   }
 });
 
-// DELETE image
-router.delete("/:id", optionalAuth, async (req, res) => {
+// DELETE image (Manager/Owner only)
+router.delete("/:id", authenticate, requireManagerOrOwner, async (req, res) => {
   try {
     const image = await Gallery.findByIdAndDelete(req.params.id);
     if (!image) {

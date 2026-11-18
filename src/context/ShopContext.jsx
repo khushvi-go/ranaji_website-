@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { productsAPI, categoriesAPI } from '../services/api';
+import { defaultCategories, defaultProducts } from '../data/initialShopData';
 import toast from 'react-hot-toast';
 
 const ShopContext = createContext();
@@ -13,8 +14,8 @@ export const useShop = () => {
 };
 
 export const ShopProvider = ({ children }) => {
-  const [categories, setCategories] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState(defaultCategories);
+  const [products, setProducts] = useState(defaultProducts);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -36,12 +37,13 @@ export const ShopProvider = ({ children }) => {
         ? prodsRes
         : prodsRes.data || [];
 
-      setCategories(loadedCategories);
-      setProducts(loadedProducts);
+      setCategories(loadedCategories.length > 0 ? loadedCategories : defaultCategories);
+      setProducts(loadedProducts.length > 0 ? loadedProducts : defaultProducts);
     } catch (err) {
       console.error('Failed to load shop catalog from MongoDB Atlas:', err);
       setError(err.message || 'Unable to connect to Ranaji database');
-      toast.error('Unable to load live catalog from database: ' + err.message);
+      setCategories((prev) => prev.length > 0 ? prev : defaultCategories);
+      setProducts((prev) => prev.length > 0 ? prev : defaultProducts);
     } finally {
       setLoading(false);
     }

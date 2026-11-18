@@ -12,7 +12,15 @@ import {
   CheckCircle2, 
   Clock, 
   ShieldAlert,
-  Edit2
+  Edit2,
+  Eye,
+  X,
+  Lock,
+  Check,
+  FileText,
+  SlidersHorizontal,
+  Layers,
+  Crown
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAdmin } from '../../context/AdminContext';
@@ -26,8 +34,127 @@ const ROLE_COLORS = {
   inventory: 'bg-amber-500/20 text-amber-400 border-amber-500/30'
 };
 
+// Comprehensive 8-category Permission Matrix definitions
+const PERMISSION_MATRIX = [
+  {
+    category: '1. Billing & POS',
+    description: 'Create counter invoices, scan barcodes, select payment methods (Cash, UPI, Card), and print customer tax receipts',
+    roles: {
+      owner: { status: 'FULL', label: 'Full Access', detail: 'All counters & registers' },
+      manager: { status: 'FULL', label: 'Full Access', detail: 'Can operate POS & view register' },
+      cashier: { status: 'FULL', label: 'Full Access', detail: 'Primary POS counter terminal operator' },
+      inventory: { status: 'NONE', label: 'No Access', detail: 'Counter billing restricted' }
+    }
+  },
+  {
+    category: '2. Refunds & Discounts',
+    description: 'Process transaction returns, custom percentage price discounts, and invoice void cancellations',
+    roles: {
+      owner: { status: 'FULL', label: 'Full Access', detail: 'Unlimited discount & refund authorization' },
+      manager: { status: 'FULL', label: 'Full Access', detail: 'Can approve discounts up to 25% and refunds' },
+      cashier: { status: 'RESTRICTED', label: 'Approval Required', detail: 'Discounts >10% & voids require Manager PIN/approval' },
+      inventory: { status: 'NONE', label: 'No Access', detail: 'No billing or refund rights' }
+    }
+  },
+  {
+    category: '3. Products & Pricing',
+    description: 'Add new garments, update retail purchase prices, rental rates, and catalog collections',
+    roles: {
+      owner: { status: 'FULL', label: 'Full Access', detail: 'Full price & garment catalog authority' },
+      manager: { status: 'RESTRICTED', label: 'Edit Outfits (No Price Drops)', detail: 'Can modify descriptions/photos; pricing locked' },
+      cashier: { status: 'VIEW', label: 'View Only', detail: 'Can look up outfit prices in POS' },
+      inventory: { status: 'VIEW', label: 'View Only', detail: 'Can view SKU details & barcodes' }
+    }
+  },
+  {
+    category: '4. Inventory & Stock',
+    description: 'Log workshop batch deliveries, manual stock adjustments, write-offs, and stockroom transfers',
+    roles: {
+      owner: { status: 'FULL', label: 'Full Access', detail: 'Unrestricted stock & write-off authority' },
+      manager: { status: 'FULL', label: 'Full Access', detail: 'Audits, approvals & stock reconciliations' },
+      cashier: { status: 'VIEW', label: 'View Only', detail: 'Can verify available stock at checkout' },
+      inventory: { status: 'FULL', label: 'Full Access', detail: 'Daily deliveries, stock counts & adjustment logs' }
+    }
+  },
+  {
+    category: '5. Customer Records',
+    description: 'Client profiles, bespoke tailoring body measurements, contact details, and purchase history',
+    roles: {
+      owner: { status: 'FULL', label: 'Full Access', detail: 'Full client records & data export' },
+      manager: { status: 'FULL', label: 'Full Access', detail: 'Full client records & measurement profiles' },
+      cashier: { status: 'VIEW', label: 'Create & View', detail: 'Register client at counter & view measurements' },
+      inventory: { status: 'NONE', label: 'No Access', detail: 'Customer identity data hidden' }
+    }
+  },
+  {
+    category: '6. Reports & Analytics',
+    description: 'Gross revenue, payment method breakdown, profit margins, GST summaries, and top-seller garments',
+    roles: {
+      owner: { status: 'FULL', label: 'Full Access', detail: 'Complete financial ledger & tax audit' },
+      manager: { status: 'VIEW', label: 'Operational Reports', detail: 'Sales volumes & inventory health reports' },
+      cashier: { status: 'NONE', label: 'No Access', detail: 'Financial reports restricted' },
+      inventory: { status: 'NONE', label: 'No Access', detail: 'Financial reports restricted' }
+    }
+  },
+  {
+    category: '7. Staff Management',
+    description: 'Create employee accounts, assign role permissions, reset credentials, and revoke access',
+    roles: {
+      owner: { status: 'FULL', label: 'Full Access', detail: 'Exclusive governance of staff accounts' },
+      manager: { status: 'RESTRICTED', label: 'Approval Required', detail: 'Can submit staff requests to Owner' },
+      cashier: { status: 'NONE', label: 'No Access', detail: 'Staff governance restricted' },
+      inventory: { status: 'NONE', label: 'No Access', detail: 'Staff governance restricted' }
+    }
+  },
+  {
+    category: '8. Business Settings',
+    description: 'Store GSTIN, showroom addresses, bank QR codes, security timeouts, and system policies',
+    roles: {
+      owner: { status: 'FULL', label: 'Full Access', detail: 'Master showroom configuration & secrets' },
+      manager: { status: 'NONE', label: 'No Access', detail: 'Business settings restricted' },
+      cashier: { status: 'NONE', label: 'No Access', detail: 'Business settings restricted' },
+      inventory: { status: 'NONE', label: 'No Access', detail: 'Business settings restricted' }
+    }
+  }
+];
+
+const PermissionBadge = ({ status, label }) => {
+  switch (status) {
+    case 'FULL':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+          <CheckCircle2 size={12} />
+          {label || 'Full Access'}
+        </span>
+      );
+    case 'VIEW':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30">
+          <Eye size={12} />
+          {label || 'View Only'}
+        </span>
+      );
+    case 'RESTRICTED':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30">
+          <Clock size={12} />
+          {label || 'Restricted'}
+        </span>
+      );
+    case 'NONE':
+    default:
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-rose-500/15 text-rose-400 border border-rose-500/30">
+          <X size={12} />
+          {label || 'No Access'}
+        </span>
+      );
+  }
+};
+
 const Staff = () => {
   const { adminUser, isOwner, canManageStaff } = useAdmin();
+  const [activeTab, setActiveTab] = useState('directory'); // 'directory' | 'matrix'
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -153,171 +280,307 @@ const Staff = () => {
           </p>
         </div>
 
-        {canManageStaff && (
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gold to-copper text-night font-bold text-xs uppercase tracking-wider rounded-xl hover:brightness-110 shadow-lg font-body transition-all"
-          >
-            <UserPlus size={16} />
-            <span>Add Staff Account</span>
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {canManageStaff && (
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-gold to-copper text-night font-bold text-xs uppercase tracking-wider rounded-xl hover:brightness-110 shadow-lg font-body transition-all"
+            >
+              <UserPlus size={16} />
+              <span>Add Staff Account</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Security Policies Info Box */}
-      <div className="bg-night border border-gold/20 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gold/10 border border-gold/30 flex items-center justify-center text-gold shrink-0 mt-0.5">
-            <Shield size={18} />
-          </div>
-          <div>
-            <div className="text-sm font-semibold text-cream">Showroom Security Hierarchy</div>
-            <div className="text-xs text-cream/60 mt-0.5 space-x-2">
-              <span className="text-gold font-bold">Owner:</span> Full authority & staff governance &bull;{' '}
-              <span className="text-blue-400 font-bold">Manager:</span> Approvals & store audits &bull;{' '}
-              <span className="text-emerald-400 font-bold">Cashier:</span> POS & checkout &bull;{' '}
-              <span className="text-amber-400 font-bold">Inventory:</span> Catalog & stock control
-            </div>
-          </div>
-        </div>
+      {/* Navigation Tabs: Staff Directory vs Role Permissions Matrix */}
+      <div className="flex border-b border-gold/20 gap-2">
         <button
-          onClick={fetchStaff}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/10 text-gold hover:bg-gold/20 text-xs font-mono transition-colors"
+          onClick={() => setActiveTab('directory')}
+          className={`flex items-center gap-2 px-5 py-3 text-xs font-body font-semibold uppercase tracking-wider border-b-2 transition-all ${
+            activeTab === 'directory'
+              ? 'border-gold text-gold bg-gold/5'
+              : 'border-transparent text-cream/60 hover:text-cream hover:bg-cream/5'
+          }`}
         >
-          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-          <span>Refresh</span>
+          <Users size={16} />
+          <span>Staff Accounts Directory ({staffList.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('matrix')}
+          className={`flex items-center gap-2 px-5 py-3 text-xs font-body font-semibold uppercase tracking-wider border-b-2 transition-all ${
+            activeTab === 'matrix'
+              ? 'border-gold text-gold bg-gold/5'
+              : 'border-transparent text-cream/60 hover:text-cream hover:bg-cream/5'
+          }`}
+        >
+          <Shield size={16} />
+          <span>Role Permissions Matrix (8 Categories)</span>
         </button>
       </div>
 
-      {/* Staff List Table */}
-      <div className="bg-night border border-gold/20 rounded-2xl overflow-hidden shadow-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-body">
-            <thead className="bg-cream/5 text-gold border-b border-gold/20 uppercase tracking-wider text-[11px]">
-              <tr>
-                <th className="py-3.5 px-4 font-semibold">Staff Member</th>
-                <th className="py-3.5 px-4 font-semibold">Employee ID</th>
-                <th className="py-3.5 px-4 font-semibold text-center">Assigned Role</th>
-                <th className="py-3.5 px-4 font-semibold text-center">Account Status</th>
-                <th className="py-3.5 px-4 font-semibold">Last Active</th>
-                <th className="py-3.5 px-4 font-semibold text-right">Access Controls</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gold/10">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-cream/40">
-                    <RefreshCw className="animate-spin inline-block mr-2" size={16} />
-                    Loading staff credentials...
-                  </td>
-                </tr>
-              ) : staffList.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-cream/40">
-                    No staff records found.
-                  </td>
-                </tr>
-              ) : (
-                staffList.map((staff) => {
-                  const roleStyle = ROLE_COLORS[staff.role] || 'bg-cream/10 text-cream border-cream/20';
-                  const isCurrentLoggedUser = adminUser?.email === staff.email;
-                  const isActive = staff.isActive !== false;
+      {/* TAB 1: STAFF DIRECTORY */}
+      {activeTab === 'directory' && (
+        <div className="space-y-6">
+          {/* Security Policies Info Box */}
+          <div className="bg-night border border-gold/20 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gold/10 border border-gold/30 flex items-center justify-center text-gold shrink-0 mt-0.5">
+                <Shield size={18} />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-cream">Showroom Security Hierarchy</div>
+                <div className="text-xs text-cream/60 mt-0.5 space-x-2">
+                  <span className="text-gold font-bold">Owner:</span> Full authority & staff governance &bull;{' '}
+                  <span className="text-blue-400 font-bold">Manager:</span> Approvals & store audits &bull;{' '}
+                  <span className="text-emerald-400 font-bold">Cashier:</span> POS & checkout &bull;{' '}
+                  <span className="text-amber-400 font-bold">Inventory:</span> Catalog & stock control
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={fetchStaff}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/10 text-gold hover:bg-gold/20 text-xs font-mono transition-colors"
+            >
+              <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+              <span>Refresh</span>
+            </button>
+          </div>
 
-                  return (
-                    <tr key={staff.id || staff._id} className="hover:bg-gold/5 transition-colors">
-                      <td className="py-3.5 px-4">
-                        <div className="font-display font-bold text-cream text-sm flex items-center gap-2">
-                          {staff.name}
-                          {isCurrentLoggedUser && (
-                            <span className="text-[10px] bg-gold text-night px-1.5 py-0.2 rounded font-bold">YOU</span>
-                          )}
-                        </div>
-                        <div className="text-[11px] text-cream/50 font-mono mt-0.5">{staff.email}</div>
-                      </td>
-
-                      <td className="py-3.5 px-4 font-mono text-cream/70 font-semibold">
-                        {staff.employeeId || 'RNJ-STAFF'}
-                      </td>
-
-                      <td className="py-3.5 px-4 text-center">
-                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${roleStyle}`}>
-                          {staff.role}
-                        </span>
-                      </td>
-
-                      <td className="py-3.5 px-4 text-center">
-                        {isActive ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                            <CheckCircle2 size={10} /> Active
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30">
-                            <AlertCircle size={10} /> Revoked
-                          </span>
-                        )}
-                      </td>
-
-                      <td className="py-3.5 px-4 text-cream/60 text-[11px]">
-                        {staff.lastLogin ? new Date(staff.lastLogin).toLocaleString('en-IN', {
-                          day: 'numeric',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        }) : 'Never'}
-                      </td>
-
-                      <td className="py-3.5 px-4 text-right">
-                        {canManageStaff ? (
-                          <div className="inline-flex items-center gap-2">
-                            <button
-                              onClick={() => {
-                                setSelectedStaff(staff);
-                                setNewRole(staff.role);
-                                setIsRoleModalOpen(true);
-                              }}
-                              className="px-2.5 py-1 bg-gold/10 hover:bg-gold/20 text-gold border border-gold/30 rounded-lg text-xs font-body transition-colors inline-flex items-center gap-1"
-                              title="Modify Role & Permissions"
-                            >
-                              <Edit2 size={12} />
-                              <span>Role</span>
-                            </button>
-
-                            {isActive ? (
-                              <button
-                                onClick={() => {
-                                  setSelectedStaff(staff);
-                                  setIsDeactivateModalOpen(true);
-                                }}
-                                disabled={isCurrentLoggedUser}
-                                className="px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-body transition-colors disabled:opacity-30 disabled:pointer-events-none inline-flex items-center gap-1"
-                                title="Instantly Revoke Access"
-                              >
-                                <UserX size={12} />
-                                <span>Revoke</span>
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleReactivate(staff)}
-                                className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-body transition-colors inline-flex items-center gap-1"
-                                title="Reactivate Account"
-                              >
-                                <UserCheck size={12} />
-                                <span>Reactivate</span>
-                              </button>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-cream/30 text-[11px] italic">Protected</span>
-                        )}
+          {/* Staff List Table */}
+          <div className="bg-night border border-gold/20 rounded-2xl overflow-hidden shadow-xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-body">
+                <thead className="bg-cream/5 text-gold border-b border-gold/20 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th className="py-3.5 px-4 font-semibold">Staff Member</th>
+                    <th className="py-3.5 px-4 font-semibold">Employee ID</th>
+                    <th className="py-3.5 px-4 font-semibold text-center">Assigned Role</th>
+                    <th className="py-3.5 px-4 font-semibold text-center">Account Status</th>
+                    <th className="py-3.5 px-4 font-semibold">Last Active</th>
+                    <th className="py-3.5 px-4 font-semibold text-right">Access Controls</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gold/10">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-cream/40">
+                        <RefreshCw className="animate-spin inline-block mr-2" size={16} />
+                        Loading staff credentials...
                       </td>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                  ) : staffList.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-cream/40">
+                        No staff records found.
+                      </td>
+                    </tr>
+                  ) : (
+                    staffList.map((staff) => {
+                      const roleStyle = ROLE_COLORS[staff.role] || 'bg-cream/10 text-cream border-cream/20';
+                      const isCurrentLoggedUser = adminUser?.email === staff.email;
+                      const isActive = staff.isActive !== false;
+
+                      return (
+                        <tr key={staff.id || staff._id} className="hover:bg-gold/5 transition-colors">
+                          <td className="py-3.5 px-4">
+                            <div className="font-display font-bold text-cream text-sm flex items-center gap-2">
+                              {staff.name}
+                              {isCurrentLoggedUser && (
+                                <span className="text-[10px] bg-gold text-night px-1.5 py-0.2 rounded font-bold">YOU</span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-cream/50 font-mono mt-0.5">{staff.email}</div>
+                          </td>
+
+                          <td className="py-3.5 px-4 font-mono text-cream/70 font-semibold">
+                            {staff.employeeId || 'RNJ-STAFF'}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-center">
+                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${roleStyle}`}>
+                              {staff.role}
+                            </span>
+                          </td>
+
+                          <td className="py-3.5 px-4 text-center">
+                            {isActive ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                <CheckCircle2 size={10} /> Active
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30">
+                                <AlertCircle size={10} /> Revoked
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-cream/60 text-[11px]">
+                            {staff.lastLogin ? new Date(staff.lastLogin).toLocaleString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }) : 'Never'}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-right">
+                            {canManageStaff ? (
+                              <div className="inline-flex items-center gap-2">
+                                <button
+                                  onClick={() => {
+                                    setSelectedStaff(staff);
+                                    setNewRole(staff.role);
+                                    setIsRoleModalOpen(true);
+                                  }}
+                                  className="px-2.5 py-1 bg-gold/10 hover:bg-gold/20 text-gold border border-gold/30 rounded-lg text-xs font-body transition-colors inline-flex items-center gap-1"
+                                  title="Modify Role & Permissions"
+                                >
+                                  <Edit2 size={12} />
+                                  <span>Role</span>
+                                </button>
+
+                                {isActive ? (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedStaff(staff);
+                                      setIsDeactivateModalOpen(true);
+                                    }}
+                                    disabled={isCurrentLoggedUser}
+                                    className="px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-body transition-colors disabled:opacity-30 disabled:pointer-events-none inline-flex items-center gap-1"
+                                    title="Instantly Revoke Access"
+                                  >
+                                    <UserX size={12} />
+                                    <span>Revoke</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleReactivate(staff)}
+                                    className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-body transition-colors inline-flex items-center gap-1"
+                                    title="Reactivate Account"
+                                  >
+                                    <UserCheck size={12} />
+                                    <span>Reactivate</span>
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-cream/30 text-[11px] italic">Protected</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* TAB 2: ROLE PERMISSIONS MATRIX */}
+      {activeTab === 'matrix' && (
+        <div className="space-y-6">
+          {/* Matrix Policy Legend */}
+          <div className="bg-cream/5 border border-gold/15 rounded-2xl p-5 shadow-xl">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div>
+                <h3 className="font-serif text-lg text-cream">Role-Based Access Control (RBAC) Governance</h3>
+                <p className="text-xs text-cream/50 font-body mt-0.5">
+                  Principle of least privilege enforced strictly across all Ranaji showroom modules and APIs
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold uppercase">
+                  <CheckCircle2 size={11} /> Full Access
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-bold uppercase">
+                  <Eye size={11} /> View Only
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-bold uppercase">
+                  <Clock size={11} /> Approval Required
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30 text-[10px] font-bold uppercase">
+                  <X size={11} /> No Access
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Matrix Table */}
+          <div className="bg-night border border-gold/20 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-body">
+                <thead className="bg-cream/5 text-gold border-b border-gold/20 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th className="py-4 px-5 font-semibold w-72">Operational Category</th>
+                    <th className="py-4 px-4 font-semibold text-center bg-gold/10 text-gold border-x border-gold/20">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Crown size={14} />
+                        <span>Owner / Super Admin</span>
+                      </div>
+                    </th>
+                    <th className="py-4 px-4 font-semibold text-center text-blue-400">
+                      <span>Manager</span>
+                    </th>
+                    <th className="py-4 px-4 font-semibold text-center text-emerald-400">
+                      <span>Cashier</span>
+                    </th>
+                    <th className="py-4 px-4 font-semibold text-center text-amber-400">
+                      <span>Inventory Staff</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gold/10">
+                  {PERMISSION_MATRIX.map((row) => (
+                    <tr key={row.category} className="hover:bg-cream/[0.03] transition-colors">
+                      <td className="py-4 px-5">
+                        <div className="font-display font-bold text-cream text-sm">{row.category}</div>
+                        <p className="text-[11px] text-cream/50 font-body mt-1 leading-relaxed">{row.description}</p>
+                      </td>
+
+                      {/* Owner Column */}
+                      <td className="py-4 px-4 text-center bg-gold/5 border-x border-gold/15">
+                        <div className="flex flex-col items-center gap-1">
+                          <PermissionBadge status={row.roles.owner.status} label={row.roles.owner.label} />
+                          <span className="text-[10px] text-cream/40 font-mono mt-0.5">{row.roles.owner.detail}</span>
+                        </div>
+                      </td>
+
+                      {/* Manager Column */}
+                      <td className="py-4 px-4 text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <PermissionBadge status={row.roles.manager.status} label={row.roles.manager.label} />
+                          <span className="text-[10px] text-cream/40 font-mono mt-0.5">{row.roles.manager.detail}</span>
+                        </div>
+                      </td>
+
+                      {/* Cashier Column */}
+                      <td className="py-4 px-4 text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <PermissionBadge status={row.roles.cashier.status} label={row.roles.cashier.label} />
+                          <span className="text-[10px] text-cream/40 font-mono mt-0.5">{row.roles.cashier.detail}</span>
+                        </div>
+                      </td>
+
+                      {/* Inventory Staff Column */}
+                      <td className="py-4 px-4 text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <PermissionBadge status={row.roles.inventory.status} label={row.roles.inventory.label} />
+                          <span className="text-[10px] text-cream/40 font-mono mt-0.5">{row.roles.inventory.detail}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal: Add New Staff Member */}
       <AnimatePresence>
