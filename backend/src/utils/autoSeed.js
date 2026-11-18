@@ -481,22 +481,54 @@ async function autoSeedDatabase() {
       console.log(`✅ Seeded ${initialCustomers.length} initial showroom clients.`);
     }
 
-    // 7. Ensure at least one Admin or Owner exists
-    const anyAdmin = await User.findOne({ role: { $in: ["admin", "owner"] } });
-    if (!anyAdmin) {
-      const adminEmail = process.env.ADMIN_EMAIL || "admin@ranaji.com";
-      const adminPassword = process.env.ADMIN_PASSWORD || "ChangeMe123!";
-      const admin = new User({
+    // 7. Ensure Owner & Staff accounts exist
+    const defaultStaff = [
+      {
         name: "Ranaji Showroom Administrator",
-        email: adminEmail.toLowerCase().trim(),
-        password: adminPassword,
+        email: (process.env.ADMIN_EMAIL || "admin@ranaji.com").toLowerCase().trim(),
+        password: process.env.ADMIN_PASSWORD || "ChangeMe123!",
         role: "admin",
-        provider: "local",
-        emailVerified: true,
-        isActive: true
-      });
-      await admin.save();
-      console.log(`✅ Initial showroom administrator provisioned: ${adminEmail}`);
+        employeeId: "RNJ-OWN-001"
+      },
+      {
+        name: "Vikramaditya Singh",
+        email: "manager@ranaji.com",
+        password: "Manager123!",
+        role: "manager",
+        employeeId: "RNJ-MGR-001"
+      },
+      {
+        name: "Kalyani Rathore",
+        email: "cashier@ranaji.com",
+        password: "Cashier123!",
+        role: "cashier",
+        employeeId: "RNJ-CSH-001"
+      },
+      {
+        name: "Devendra Rawat",
+        email: "inventory@ranaji.com",
+        password: "Inventory123!",
+        role: "inventory",
+        employeeId: "RNJ-INV-001"
+      }
+    ];
+
+    for (const staffMember of defaultStaff) {
+      const exists = await User.findOne({ email: staffMember.email });
+      if (!exists) {
+        const u = new User({
+          name: staffMember.name,
+          email: staffMember.email,
+          password: staffMember.password,
+          role: staffMember.role,
+          employeeId: staffMember.employeeId,
+          provider: "local",
+          emailVerified: true,
+          isActive: true
+        });
+        await u.save();
+        console.log(`✅ Default ${staffMember.role.toUpperCase()} provisioned: ${staffMember.email}`);
+      }
     }
 
   } catch (error) {

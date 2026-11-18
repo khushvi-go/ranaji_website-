@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Crown, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { Crown, Lock, User, Eye, EyeOff, ShieldCheck, Receipt, Package } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 
 const Login = () => {
@@ -152,6 +152,67 @@ const Login = () => {
               )}
             </motion.button>
           </form>
+
+          {/* Quick Demo Role Switcher */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="mt-8 pt-6 border-t border-gold/15"
+          >
+            <p className="text-center text-[10px] text-cream/50 uppercase tracking-widest font-semibold mb-3">
+              One-Click Role Demo Access
+            </p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => { setUsername('admin@ranaji.com'); setPassword('ChangeMe123!'); }}
+                className="p-2.5 rounded-xl bg-gold/10 hover:bg-gold/20 text-gold border border-gold/30 flex items-center gap-2 transition-all text-left group"
+              >
+                <Crown size={16} className="shrink-0 text-gold" />
+                <div className="min-w-0">
+                  <p className="font-bold text-[11px] truncate">Owner / Admin</p>
+                  <p className="text-[9px] text-cream/40 truncate">Executive Command</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setUsername('manager@ranaji.com'); setPassword('Manager123!'); }}
+                className="p-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-2 transition-all text-left group"
+              >
+                <ShieldCheck size={16} className="shrink-0 text-blue-400" />
+                <div className="min-w-0">
+                  <p className="font-bold text-[11px] truncate">Store Manager</p>
+                  <p className="text-[9px] text-cream/40 truncate">Approvals & Audits</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setUsername('cashier@ranaji.com'); setPassword('Cashier123!'); }}
+                className="p-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-2 transition-all text-left group"
+              >
+                <Receipt size={16} className="shrink-0 text-emerald-400" />
+                <div className="min-w-0">
+                  <p className="font-bold text-[11px] truncate">POS Cashier</p>
+                  <p className="text-[9px] text-cream/40 truncate">Counter Billing</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setUsername('inventory@ranaji.com'); setPassword('Inventory123!'); }}
+                className="p-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-2 transition-all text-left group"
+              >
+                <Package size={16} className="shrink-0 text-amber-400" />
+                <div className="min-w-0">
+                  <p className="font-bold text-[11px] truncate">Inventory Staff</p>
+                  <p className="text-[9px] text-cream/40 truncate">Stock & SKUs</p>
+                </div>
+              </button>
+            </div>
+          </motion.div>
 
 
 
