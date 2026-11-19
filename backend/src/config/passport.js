@@ -21,7 +21,7 @@ const clientSecret = process.env.GOOGLE_CLIENT_SECRET || 'placeholder-google-cli
 const callbackURL = process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/users/google/callback';
 
 if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-  console.warn("⚠️ [Passport] GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET is not configured in backend/.env. Using placeholder strategy registration.");
+  console.warn("⚠️ [Passport] GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET is not configured in environment variables. Google OAuth will use placeholder credentials.");
 }
 
 passport.use(
